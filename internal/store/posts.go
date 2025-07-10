@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -26,6 +27,8 @@ func (s *PostsStore) Create(ctx context.Context, post *Post) error {
 		VALUES ($1, $2, $3, $4) RETURNING id, created_at, updated_at
 	`
 
+	var createdAt, updatedAt time.Time
+
 	if err := s.db.QueryRow(
 		ctx,
 		query,
@@ -35,10 +38,14 @@ func (s *PostsStore) Create(ctx context.Context, post *Post) error {
 		post.Tags, // pgx supports slices for array types directly
 	).Scan(
 		&post.ID,
-		&post.CreatedAt,
-		&post.UpdatedAt,
+		&createdAt,
+		&updatedAt,
 	); err != nil {
 		return err
 	}
+
+	post.CreatedAt = createdAt.Format(time.RFC3339)
+	post.UpdatedAt = updatedAt.Format(time.RFC3339)
+
 	return nil
 }

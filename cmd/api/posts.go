@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/atomicmeganerd/rcd-gopher-social/internal/store"
@@ -15,6 +17,7 @@ type CreatePostPayload struct {
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
+		slog.Error("failed to read JSON", "error", err)
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 	}
 	userId := 1 // TODO: This should be replaced with actual user ID extraction logic
@@ -28,11 +31,13 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := app.store.Posts.Create(ctx, post); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to create post")
+		slog.Error("failed to create post", "error", err)
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post %s", err.Error()))
 		return
 	}
 
 	if err := writeJSON(w, http.StatusCreated, post); err != nil {
+		slog.Error("failed to write JSON response", "error", err)
 		writeJSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

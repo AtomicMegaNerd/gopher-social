@@ -28,6 +28,5 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 	}
 	if err := writeJSON(w, status, &envelope{Error: message}); err != nil {
 		slog.Error("failed to write JSON error response", "error", err)
-		return
 	}
 }
