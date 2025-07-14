@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -64,8 +65,14 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post, err := app.store.Posts.GetByID(ctx, postID)
 	if err != nil {
-		slog.Error("unable to load post", "error", err)
-		writeJSONError(w, http.StatusInternalServerError, "Unable to load post")
+		switch {
+		case errors.Is(err, store.ErrNotFound):
+			slog.Error("no post found", "postID", postID)
+			writeJSONError(w, http.StatusNotFound, "no post found")
+		default:
+			slog.Error("error loading post", "error", err)
+			writeJSONError(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 

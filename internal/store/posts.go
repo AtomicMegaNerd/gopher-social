@@ -2,8 +2,10 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -64,7 +66,12 @@ func (s *PostsStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
 		&createdAt,
 		&updatedAt,
 	); err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
 	}
 
 	post.CreatedAt = createdAt.Format(time.RFC3339)
