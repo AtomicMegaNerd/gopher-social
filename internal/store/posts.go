@@ -49,3 +49,26 @@ func (s *PostsStore) Create(ctx context.Context, post *Post) error {
 
 	return nil
 }
+
+func (s *PostsStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
+	query := `SELECT title, content, user_id, tags, created_at, updated_at FROM posts WHERE id=$1`
+
+	var createdAt, updatedAt time.Time
+
+	post := &Post{ID: postID}
+	if err := s.db.QueryRow(ctx, query, postID).Scan(
+		&post.Title,
+		&post.Content,
+		&post.UserID,
+		&post.Tags,
+		&createdAt,
+		&updatedAt,
+	); err != nil {
+		return nil, err
+	}
+
+	post.CreatedAt = createdAt.Format(time.RFC3339)
+	post.UpdatedAt = updatedAt.Format(time.RFC3339)
+
+	return post, nil
+}
