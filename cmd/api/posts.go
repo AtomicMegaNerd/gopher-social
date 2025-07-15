@@ -42,7 +42,6 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 	if err := writeJSON(w, http.StatusCreated, post); err != nil {
 		slog.Error("failed to write JSON response", "error", err)
 		writeJSONError(w, http.StatusInternalServerError, err.Error())
-		return
 	}
 }
 
@@ -68,7 +67,7 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
 			slog.Error("no post found", "postID", postID)
-			writeJSONError(w, http.StatusNotFound, "no post found")
+			writeJSONError(w, http.StatusNotFound, err.Error())
 		default:
 			slog.Error("error loading post", "error", err)
 			writeJSONError(w, http.StatusInternalServerError, err.Error())
@@ -76,5 +75,7 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = writeJSON(w, http.StatusOK, post)
+	if err = writeJSON(w, http.StatusOK, post); err != nil {
+		writeJSONError(w, http.StatusInternalServerError, err.Error())
+	}
 }
