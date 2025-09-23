@@ -23,6 +23,7 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 		slog.Error("failed to read JSON", "error", err)
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 	}
+
 	userId := 1 // TODO: This should be replaced with actual user ID extraction logic
 	ctx := r.Context()
 
@@ -35,7 +36,12 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 
 	if err := app.store.Posts.Create(ctx, post); err != nil {
 		slog.Error("failed to create post", "error", err)
-		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("failed to create post %s", err.Error()))
+		// TODO: Differentiate between different types of errors (e.g., validation errors)
+		writeJSONError(
+			w,
+			http.StatusInternalServerError,
+			fmt.Sprintf("failed to create post %s", err.Error()),
+		)
 		return
 	}
 
@@ -46,7 +52,6 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
-
 	postIDRaw := chi.URLParam(r, "postID")
 	if postIDRaw == "" {
 		slog.Error("Missing argument postID")

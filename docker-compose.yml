@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17.5-alpine3.22
+    image: postgres:17.6-alpine3.22
     container_name: postgres-db
     env_file:
       - .envrc

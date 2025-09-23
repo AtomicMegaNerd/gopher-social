@@ -20,9 +20,16 @@ type config struct {
 type dbConfig struct {
 	addr         string
 	maxOpenConns int
-	maxIdleConns int
+	minIdleConns int
 	maxIdleTime  string
 }
+
+const (
+	httpTimeout  = 60 * time.Second
+	writeTimeout = 30 * time.Second
+	readTimeout  = 10 * time.Second
+	idleTimeout  = 60 * time.Second
+)
 
 type application struct {
 	config config
@@ -31,15 +38,19 @@ type application struct {
 
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
+
 	r.Use(middleware.Logger)
 	// This middleware recovers from panics and writes a 500 if there is one.
 	r.Use(middleware.Recoverer)
+	// This middleware logs the IP address of the requestor.
 	r.Use(middleware.RealIP)
+	// This middleware adds a request ID to each request.
 	r.Use(middleware.RequestID)
 
 	// What a great way to set timeout!
-	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(middleware.Timeout(httpTimeout))
 
+	// Creating the routes is really easy with chi.
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
 		r.Route("/posts", func(r chi.Router) {
@@ -57,9 +68,9 @@ func (app *application) run(mux http.Handler) error {
 	srv := &http.Server{
 		Addr:         app.config.addr,
 		Handler:      mux,
-		WriteTimeout: time.Second * 30,
-		ReadTimeout:  time.Second * 10,
-		IdleTimeout:  time.Minute,
+		WriteTimeout: writeTimeout,
+		ReadTimeout:  readTimeout,
+		IdleTimeout:  idleTimeout,
 	}
 
 	slog.Info("Starting server", "port", app.config.addr)

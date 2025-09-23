@@ -41,14 +41,14 @@ import (
 		return db, nil
 	 }
 */
-func New(addr string, maxOpenConns, maxIdleConns int, maxIdleTime string) (*pgxpool.Pool, error) {
+func New(addr string, maxOpenConns, minIdleConns int, maxIdleTime string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(addr)
 	if err != nil {
 		return nil, err
 	}
 
 	config.MaxConns = int32(maxOpenConns)
-	config.MinIdleConns = int32(maxIdleConns)
+	config.MinIdleConns = int32(minIdleConns)
 
 	duration, err := time.ParseDuration(maxIdleTime)
 	if err != nil {

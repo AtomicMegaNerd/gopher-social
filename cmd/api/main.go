@@ -15,8 +15,8 @@ func main() {
 		db: dbConfig{
 			// postgres://user:password@host:port/dbname?sslmode=disable
 			addr:         env.GetString("DATABASE_URL", ""), // no default, must be set
-			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
-			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
+			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 20),
+			minIdleConns: env.GetInt("DB_MIN_IDLE_CONNS", 5),
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
 		env:     env.GetString("ENV", "development"),
@@ -26,7 +26,7 @@ func main() {
 	pool, err := db.New(
 		cfg.db.addr,
 		cfg.db.maxOpenConns,
-		cfg.db.maxIdleConns,
+		cfg.db.minIdleConns,
 		cfg.db.maxIdleTime,
 	)
 	if err != nil {
