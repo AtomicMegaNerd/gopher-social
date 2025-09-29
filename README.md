@@ -18,7 +18,8 @@ The following interesting Go libraries are used in this app:
 
 [https://github.com/air-verse/air](https://github.com/air-verse/air)
 
-This project uses `air` to automatically reload the server when changes are made. To install it, run the following command:
+This project uses `air` to automatically reload the server when changes are made. To install it,
+run the following command:
 
 ```bash
 go install github.com/air-verse/air@latest
@@ -26,9 +27,11 @@ go install github.com/air-verse/air@latest
 
 #### Configuration
 
-Checkout `.air.toml` for the configuration. The `air` command will look for this file in the root of the project.
+Checkout `.air.toml` for the configuration. The `air` command will look for this file in the root
+of the project.
 
-Assuming you have `$GOPATH/bin` in your `$PATH`, you can run the following command to start the server:
+Assuming you have `$GOPATH/bin` in your `$PATH`, you can run the following command to start the
+server:
 
 ```bash
 air
@@ -40,7 +43,8 @@ Each time you save a file, the server will automatically reload.
 
 [https://taskfile.dev](https://taskfile.dev)
 
-Think of this as Go's (much more modern) version of make. See [./Taskfile.yml](./Taskfile.yml) for the available commands.
+Think of this as Go's (much more modern) version of make. See [./Taskfile.yml](./Taskfile.yml) for
+the available commands.
 
 To install it, run the following command:
 
@@ -64,7 +68,8 @@ task test
 
 [https://github.com/direnv/direnv](https://github.com/direnv/direnv)
 
-This project uses `direnv` to manage environment variables. To use it, create a `.envrc` file in the root of the project with the following content:
+This project uses `direnv` to manage environment variables. To use it, create a `.envrc` file in
+the root of the project with the following content:
 
 ```bash
 export ADDR=":3000"
@@ -90,7 +95,8 @@ services:
 
 [https://docs.docker.com/compose/](https://docs.docker.com/compose/)
 
-This project uses `docker-compose` to run the PostgreSQL database. To install it, run the following command:
+This project uses `docker-compose` to run the PostgreSQL database. To install it, run the following
+command:
 
 ```bash
 brew install docker-compose

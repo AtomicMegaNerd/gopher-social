@@ -26,7 +26,8 @@ type PostsStore struct {
 func (s *PostsStore) Create(ctx context.Context, post *Post) error {
 	query := `
 		INSERT INTO posts (content, title, user_id, tags)
-		VALUES ($1, $2, $3, $4) RETURNING id, created_at, updated_at
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at, updated_at
 	`
 
 	var createdAt, updatedAt time.Time
@@ -53,7 +54,11 @@ func (s *PostsStore) Create(ctx context.Context, post *Post) error {
 }
 
 func (s *PostsStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
-	query := `SELECT title, content, user_id, tags, created_at, updated_at FROM posts WHERE id=$1`
+	query := `
+		SELECT title, content, user_id, tags, created_at, updated_at
+		FROM posts
+		WHERE id=$1
+	`
 
 	var createdAt, updatedAt time.Time
 
