@@ -10,19 +10,25 @@ import (
 )
 
 type CreatePostPayload struct {
-	Title   string   `json:"title"`
-	Content string   `json:"content"`
+	Title   string   `json:"title" validate:"required,max=100"`
+	Content string   `json:"content" validate:"required,max=1000"`
 	Tags    []string `json:"tags"`
 }
 
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
+
+	userId := 1 // TODO: This should be replaced with actual user ID extraction logic
+	ctx := r.Context()
+
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestError(w, r, err)
 	}
 
-	userId := 1 // TODO: This should be replaced with actual user ID extraction logic
-	ctx := r.Context()
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestError(w, r, err)
+		return
+	}
 
 	post := &store.Post{
 		UserID:  int64(userId),
