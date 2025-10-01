@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -8,6 +9,10 @@ import (
 	"github.com/atomicmeganerd/rcd-gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
 )
+
+type postkey string
+
+const postCtx postkey = "post"
 
 type CreatePostPayload struct {
 	Title   string   `json:"title" validate:"required,max=100"`
@@ -48,32 +53,9 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
-	postIDRaw := chi.URLParam(r, "postID")
-	if postIDRaw == "" {
-		app.badRequestError(w, r, errors.New("postID is required"))
-		return
-	}
+	post := getPostFromContext(r)
 
-	postID, err := strconv.ParseInt(postIDRaw, 10, 64)
-	if err != nil {
-		app.badRequestError(w, r, err)
-		return
-	}
-
-	ctx := r.Context()
-
-	post, err := app.store.Posts.GetByID(ctx, postID)
-	if err != nil {
-		switch {
-		case errors.Is(err, store.ErrNotFound):
-			app.notFoundError(w, r, err)
-		default:
-			app.internalServerError(w, r, err)
-		}
-		return
-	}
-
-	comments, err := app.store.Comments.GetByPostID(ctx, postID)
+	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -99,9 +81,7 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	ctx := r.Context()
-
-	err = app.store.Posts.Delete(ctx, postID)
+	err = app.store.Posts.Delete(r.Context(), postID)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
@@ -116,30 +96,8 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
-	postIDRaw := chi.URLParam(r, "postID")
-	if postIDRaw == "" {
-		app.badRequestError(w, r, errors.New("postID is required"))
-		return
-	}
 
-	postID, err := strconv.ParseInt(postIDRaw, 10, 64)
-	if err != nil {
-		app.badRequestError(w, r, err)
-		return
-	}
-
-	ctx := r.Context()
-
-	post, err := app.store.Posts.GetByID(ctx, postID)
-	if err != nil {
-		switch {
-		case errors.Is(err, store.ErrNotFound):
-			app.notFoundError(w, r, err)
-		default:
-			app.internalServerError(w, r, err)
-		}
-		return
-	}
+	post := getPostFromContext(r)
 
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
@@ -156,7 +114,7 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 	post.Content = payload.Content
 	post.Tags = payload.Tags
 
-	if err := app.store.Posts.Update(ctx, post); err != nil {
+	if err := app.store.Posts.Update(r.Context(), post); err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
 			app.notFoundError(w, r, err)
@@ -169,4 +127,42 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 	if err := writeJSON(w, http.StatusOK, post); err != nil {
 		app.internalServerError(w, r, err)
 	}
+}
+
+func (app *application) postContextMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		postIDRaw := chi.URLParam(r, "postID")
+		if postIDRaw == "" {
+			app.badRequestError(w, r, errors.New("postID is required"))
+			return
+		}
+
+		postID, err := strconv.ParseInt(postIDRaw, 10, 64)
+		if err != nil {
+			app.badRequestError(w, r, err)
+			return
+		}
+
+		ctx := r.Context()
+
+		post, err := app.store.Posts.GetByID(ctx, postID)
+		if err != nil {
+			switch {
+			case errors.Is(err, store.ErrNotFound):
+				app.notFoundError(w, r, err)
+			default:
+				app.internalServerError(w, r, err)
+			}
+			return
+		}
+
+		ctx = context.WithValue(ctx, postCtx, post)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func getPostFromContext(r *http.Request) *store.Post {
+	post, _ := r.Context().Value(postCtx).(*store.Post)
+	return post
 }
