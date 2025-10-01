@@ -1,0 +1,14 @@
+name: gopher-social-create-post
+method: POST
+url: http://localhost:8080/v1/posts
+body:
+  content: |-
+    {
+      "title": "Test Post",
+      "content": "This is my first post",
+      "tags": [ "test" ]
+    }
+  content_type: application/json
+headers:
+- name: content-type
+  value: application/json

@@ -10,20 +10,21 @@ import (
 )
 
 type Post struct {
-	ID        int64    `json:"id"`
-	Content   string   `json:"content"`
-	Title     string   `json:"title"`
-	UserID    int64    `json:"user_id"`
-	Tags      []string `json:"tags"`
-	CreatedAt string   `json:"created_at"`
-	UpdatedAt string   `json:"updated_at"`
+	ID        int64     `json:"id"`
+	Content   string    `json:"content"`
+	Title     string    `json:"title"`
+	UserID    int64     `json:"user_id"`
+	Tags      []string  `json:"tags"`
+	CreatedAt string    `json:"created_at"`
+	UpdatedAt string    `json:"updated_at"`
+	Comments  []Comment `json:"comments"`
 }
 
-type PostsStore struct {
+type PostStore struct {
 	db *pgxpool.Pool
 }
 
-func (s *PostsStore) Create(ctx context.Context, post *Post) error {
+func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	query := `
 		INSERT INTO posts (content, title, user_id, tags)
 		VALUES ($1, $2, $3, $4)
@@ -53,7 +54,7 @@ func (s *PostsStore) Create(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (s *PostsStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
+func (s *PostStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
 	query := `
 		SELECT title, content, user_id, tags, created_at, updated_at
 		FROM posts
@@ -83,4 +84,49 @@ func (s *PostsStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
 	post.UpdatedAt = updatedAt.Format(time.RFC3339)
 
 	return post, nil
+}
+
+func (s *PostStore) Delete(ctx context.Context, postID int64) error {
+	query := `DELETE FROM posts WHERE id=$1`
+
+	res, err := s.db.Exec(ctx, query, postID)
+	if err != nil {
+		return err
+	}
+
+	if res.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (s *PostStore) Update(ctx context.Context, post *Post) error {
+	query := `
+		UPDATE posts
+		SET title=$1, content=$2, tags=$3, updated_at=$4
+		WHERE id=$5
+		RETURNING updated_at
+	`
+
+	var updatedAt time.Time
+	if err := s.db.QueryRow(
+		ctx,
+		query,
+		post.Title,
+		post.Content,
+		post.Tags,
+		time.Now(),
+		post.ID,
+	).Scan(&updatedAt); err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return ErrNotFound
+		default:
+			return err
+		}
+	}
+
+	post.UpdatedAt = updatedAt.Format(time.RFC3339)
+	return nil
 }

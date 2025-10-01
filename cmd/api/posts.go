@@ -59,6 +59,7 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 		app.badRequestError(w, r, err)
 		return
 	}
+
 	ctx := r.Context()
 
 	post, err := app.store.Posts.GetByID(ctx, postID)
@@ -72,7 +73,100 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	comments, err := app.store.Comments.GetByPostID(ctx, postID)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	post.Comments = comments
+
 	if err = writeJSON(w, http.StatusOK, post); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
+func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
+	postIDRaw := chi.URLParam(r, "postID")
+	if postIDRaw == "" {
+		app.badRequestError(w, r, errors.New("postID is required"))
+		return
+	}
+
+	postID, err := strconv.ParseInt(postIDRaw, 10, 64)
+	if err != nil {
+		app.badRequestError(w, r, err)
+		return
+	}
+
+	ctx := r.Context()
+
+	err = app.store.Posts.Delete(ctx, postID)
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrNotFound):
+			app.notFoundError(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
+	postIDRaw := chi.URLParam(r, "postID")
+	if postIDRaw == "" {
+		app.badRequestError(w, r, errors.New("postID is required"))
+		return
+	}
+
+	postID, err := strconv.ParseInt(postIDRaw, 10, 64)
+	if err != nil {
+		app.badRequestError(w, r, err)
+		return
+	}
+
+	ctx := r.Context()
+
+	post, err := app.store.Posts.GetByID(ctx, postID)
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrNotFound):
+			app.notFoundError(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	var payload CreatePostPayload
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestError(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestError(w, r, err)
+		return
+	}
+
+	post.Title = payload.Title
+	post.Content = payload.Content
+	post.Tags = payload.Tags
+
+	if err := app.store.Posts.Update(ctx, post); err != nil {
+		switch {
+		case errors.Is(err, store.ErrNotFound):
+			app.notFoundError(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := writeJSON(w, http.StatusOK, post); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }

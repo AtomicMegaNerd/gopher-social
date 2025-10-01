@@ -1,0 +1,2 @@
+name: gopher-social-get-post
+url: http://localhost:8080/v1/posts/1

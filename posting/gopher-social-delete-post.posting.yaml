@@ -1,0 +1,3 @@
+name: gopher-social-delete-post
+method: DELETE
+url: http://localhost:8080/v1/posts/2
