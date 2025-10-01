@@ -52,7 +52,7 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := writeJSON(w, http.StatusCreated, post); err != nil {
+	if err := app.jsonResponse(w, http.StatusCreated, post); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -68,25 +68,15 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post.Comments = comments
 
-	if err = writeJSON(w, http.StatusOK, post); err != nil {
+	if err = app.jsonResponse(w, http.StatusOK, post); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
 
 func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
-	postIDRaw := chi.URLParam(r, "postID")
-	if postIDRaw == "" {
-		app.badRequestError(w, r, errors.New("postID is required"))
-		return
-	}
+	post := getPostFromContext(r)
 
-	postID, err := strconv.ParseInt(postIDRaw, 10, 64)
-	if err != nil {
-		app.badRequestError(w, r, err)
-		return
-	}
-
-	err = app.store.Posts.Delete(r.Context(), postID)
+	err := app.store.Posts.Delete(r.Context(), post.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
@@ -133,7 +123,7 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := writeJSON(w, http.StatusOK, post); err != nil {
+	if err := app.jsonResponse(w, http.StatusOK, post); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
