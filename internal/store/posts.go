@@ -104,8 +104,8 @@ func (s *PostStore) Delete(ctx context.Context, postID int64) error {
 func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	query := `
 		UPDATE posts
-		SET title=$1, content=$2, tags=$3, updated_at=$4
-		WHERE id=$5
+		SET title=$1, content=$2, updated_at=$3
+		WHERE id=$4
 		RETURNING updated_at
 	`
 
@@ -115,7 +115,6 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 		query,
 		post.Title,
 		post.Content,
-		post.Tags,
 		time.Now(),
 		post.ID,
 	).Scan(&updatedAt); err != nil {

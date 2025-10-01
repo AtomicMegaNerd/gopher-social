@@ -20,6 +20,11 @@ type CreatePostPayload struct {
 	Tags    []string `json:"tags"`
 }
 
+type UpdatePostPayload struct {
+	Title   *string `json:"title,omitempty" validate:"omitempty,max=100"`
+	Content *string `json:"content,omitempty" validate:"omitempty,max=1000"`
+}
+
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	userId := 1 // TODO: This should be replaced with actual user ID extraction logic
@@ -99,7 +104,7 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 
 	post := getPostFromContext(r)
 
-	var payload CreatePostPayload
+	var payload UpdatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestError(w, r, err)
 		return
@@ -110,9 +115,13 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	post.Title = payload.Title
-	post.Content = payload.Content
-	post.Tags = payload.Tags
+	if payload.Title != nil {
+		post.Title = *payload.Title
+	}
+
+	if payload.Content != nil {
+		post.Content = *payload.Content
+	}
 
 	if err := app.store.Posts.Update(r.Context(), post); err != nil {
 		switch {
