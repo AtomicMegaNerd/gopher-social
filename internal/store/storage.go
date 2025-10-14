@@ -3,12 +3,14 @@ package store
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var (
-	ErrNotFound = errors.New("record not found")
+	ErrNotFound          = errors.New("record not found")
+	QueryTimeoutDuration = time.Second * 5
 )
 
 type Storage struct {
