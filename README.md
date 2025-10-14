@@ -128,6 +128,14 @@ task migrate-create-users
 task migrate-create-posts
 ```
 
+To add a migration other than the base one here is example syntax:
+
+```bash
+migrate create -seq -ext sql -dir ./cmd/migrate/migrations/ alter_posts_add_version
+```
+
+This will create the up and down SQL files in the migrations directory.
+
 Run migration to upgrade:
 
 ```bash
