@@ -1,1 +1,12 @@
 name: gopher-social-patch-post
+method: PATCH
+url: http://localhost:8080/v1/posts/1
+body:
+  content: |-
+    {
+      "content": "This is updated"
+    }
+  content_type: application/json
+headers:
+- name: content-type
+  value: application/json

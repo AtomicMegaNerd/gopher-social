@@ -43,6 +43,5 @@ func (app *application) jsonResponse(w http.ResponseWriter, status int, data any
 	type envelope struct {
 		Data any `json:"data"`
 	}
-
 	return writeJSON(w, status, &envelope{Data: data})
 }

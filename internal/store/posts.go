@@ -17,6 +17,7 @@ type Post struct {
 	Tags      []string  `json:"tags"`
 	CreatedAt string    `json:"created_at"`
 	UpdatedAt string    `json:"updated_at"`
+	Version   int       `json:"version"`
 	Comments  []Comment `json:"comments"`
 }
 
@@ -56,7 +57,7 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 
 func (s *PostStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
 	query := `
-		SELECT title, content, user_id, tags, created_at, updated_at
+		SELECT title, content, user_id, tags, created_at, updated_at, version
 		FROM posts
 		WHERE id=$1
 	`
@@ -71,6 +72,7 @@ func (s *PostStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
 		&post.Tags,
 		&createdAt,
 		&updatedAt,
+		&post.Version,
 	); err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -102,11 +104,14 @@ func (s *PostStore) Delete(ctx context.Context, postID int64) error {
 }
 
 func (s *PostStore) Update(ctx context.Context, post *Post) error {
+	// Optimistic locking: only update if the version matches
+	// This prevents lost updates in concurrent scenarios
+	// The version is incremented on each successful update
 	query := `
 		UPDATE posts
-		SET title=$1, content=$2, updated_at=$3
-		WHERE id=$4
-		RETURNING updated_at
+		SET title=$1, content=$2, updated_at=$3, version=version + 1
+		WHERE id=$4 AND version=$5
+		RETURNING updated_at, version
 	`
 
 	var updatedAt time.Time
@@ -117,7 +122,8 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 		post.Content,
 		time.Now(),
 		post.ID,
-	).Scan(&updatedAt); err != nil {
+		post.Version,
+	).Scan(&updatedAt, &post.Version); err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
 			return ErrNotFound
