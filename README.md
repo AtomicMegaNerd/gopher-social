@@ -171,6 +171,14 @@ To run Rainfrog, use the following command:
 rainfrog --url $DB_ADDR
 ```
 
+## Seeding the Database for Testing
+
+To seed the database with test data, run the following command:
+
+```bash
+task seed-db
+```
+
 ## Generating Self-Signed Certificates for MacOS
 
 Instructions on how to generate the certificate using `KeyChain Access` can be found here:

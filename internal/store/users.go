@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -27,6 +28,7 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
+	var createdAt time.Time
 	if err := s.db.QueryRow(
 		ctx,
 		query,
@@ -35,9 +37,11 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 		user.Password,
 	).Scan(
 		&user.ID,
-		&user.CreatedAt,
+		&createdAt,
 	); err != nil {
 		return err
 	}
+
+	user.CreatedAt = createdAt.Format(time.RFC3339)
 	return nil
 }
