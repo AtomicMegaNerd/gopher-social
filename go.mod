@@ -1,4 +1,4 @@
-module github.com/atomicmeganerd/rcd-gopher-social
+module github.com/atomicmeganerd/gopher-social
 
 go 1.25
 

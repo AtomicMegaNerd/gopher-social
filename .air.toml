@@ -4,7 +4,7 @@ bin_dir = "bin"
 
 [build]
 args_bin = []
-bin = "./bin/rcd-gopher-social"
+bin = "./bin/gopher-social"
 cmd = "task build"
 delay = 1000
 exclude_dir = ["assets", "bin", "vendor", "testdata", "docs", "scripts"]

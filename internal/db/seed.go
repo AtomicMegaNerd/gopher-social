@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"math/rand"
 
-	"github.com/atomicmeganerd/rcd-gopher-social/internal/store"
+	"github.com/atomicmeganerd/gopher-social/internal/store"
 )
 
 var usernames = []string{

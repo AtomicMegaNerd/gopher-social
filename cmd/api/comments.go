@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/atomicmeganerd/rcd-gopher-social/internal/store"
+	"github.com/atomicmeganerd/gopher-social/internal/store"
 )
 
 type CreateCommentPayload struct {

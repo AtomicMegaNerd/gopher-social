@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/atomicmeganerd/rcd-gopher-social/internal/store"
+	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
 )
 

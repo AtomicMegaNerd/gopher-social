@@ -4,9 +4,9 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/atomicmeganerd/rcd-gopher-social/internal/db"
-	"github.com/atomicmeganerd/rcd-gopher-social/internal/env"
-	"github.com/atomicmeganerd/rcd-gopher-social/internal/store"
+	"github.com/atomicmeganerd/gopher-social/internal/db"
+	"github.com/atomicmeganerd/gopher-social/internal/env"
+	"github.com/atomicmeganerd/gopher-social/internal/store"
 )
 
 func main() {

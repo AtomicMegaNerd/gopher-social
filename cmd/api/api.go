@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/atomicmeganerd/rcd-gopher-social/internal/store"
+	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
