@@ -114,8 +114,8 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := app.store.Posts.Update(r.Context(), post); err != nil {
-		switch {
-		case errors.Is(err, store.ErrNotFound):
+		switch err {
+		case store.ErrNotFound:
 			app.notFoundError(w, r, err)
 		default:
 			app.internalServerError(w, r, err)
@@ -147,8 +147,8 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 
 		post, err := app.store.Posts.GetByID(ctx, postID)
 		if err != nil {
-			switch {
-			case errors.Is(err, store.ErrNotFound):
+			switch err {
+			case store.ErrNotFound:
 				app.notFoundError(w, r, err)
 			default:
 				app.internalServerError(w, r, err)

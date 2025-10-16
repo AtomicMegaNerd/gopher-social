@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -80,8 +79,8 @@ func (s *PostStore) GetByID(ctx context.Context, postID int64) (*Post, error) {
 		&updatedAt,
 		&post.Version,
 	); err != nil {
-		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		switch err {
+		case pgx.ErrNoRows:
 			return nil, ErrNotFound
 		default:
 			return nil, err
@@ -136,8 +135,8 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 		post.ID,
 		post.Version,
 	).Scan(&updatedAt, &post.Version); err != nil {
-		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		switch err {
+		case pgx.ErrNoRows:
 			return ErrNotFound
 		default:
 			return err
