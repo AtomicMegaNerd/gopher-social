@@ -23,6 +23,19 @@ I used PGX because the older pq library is no longer being maintained. PGX is a 
 PostgreSQL driver that is actively maintained. I also like that I could figure out how to use
 the newer library on my own without just blindly following along with the course.
 
+## Flake setup
+
+Create 2 env files. `.envrc` and `.envc`. Put the following in `.envrc`:
+
+```bash
+use flake
+source .env
+```
+
+Put the variables from the Direnv section below in `.env`.
+
+When you run `direnv allow` it will setup everything for you from the flake.
+
 ## Tools
 
 ### Air
@@ -100,6 +113,13 @@ direnv allow
 
 This project uses either Docker compose or Podman compose to run a PostgreSQL database. Check out
 instructions on the website to install it. Let's assume you have `podman-compose` installed.
+
+Because the flake code can break the env file for docker we use `.env` for docker/podman compose.
+If you are not using a flake create a symlin from `.envrc` to `.env`.
+
+```bash
+ln -s .envrc .env
+```
 
 To start the database, run the following command:
 

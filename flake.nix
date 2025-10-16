@@ -15,6 +15,10 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        # See https://github.com/golang-migrate/migrate/issues/1279
+        go-migrate-pkg = pkgs.go-migrate.overrideAttrs (oldAttrs: {
+          tags = [ "postgres" ];
+        });
       in
       {
         devShell = pkgs.mkShell {
@@ -25,6 +29,10 @@
             pkgs.gopls
             pkgs.golangci-lint
             pkgs.go-task
+            go-migrate-pkg
+            pkgs.air
+            pkgs.rainfrog
+            pkgs.posting
           ];
         };
       }
