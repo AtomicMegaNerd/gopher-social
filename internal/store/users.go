@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -49,6 +48,7 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 }
 
 func (s *UserStore) GetByID(ctx context.Context, id string) (*User, error) {
+	// WARNING: Do NOT include the password field in the SELECT statement
 	query := `
 		SELECT id, username, email, created_at
 		FROM users
@@ -66,10 +66,12 @@ func (s *UserStore) GetByID(ctx context.Context, id string) (*User, error) {
 		&user.Email,
 		&createdAt,
 	); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		switch err {
+		case pgx.ErrNoRows:
 			return nil, ErrNotFound
+		default:
+			return nil, err
 		}
-		return nil, err
 	}
 
 	user.CreatedAt = createdAt.Format(time.RFC3339)
