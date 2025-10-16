@@ -88,7 +88,7 @@ If I symlink `.envrc` to `.env` I can also pull in the environment into `docker-
 services:
   app:
     env_file:
-        - .env
+      - .env
 ```
 
 ### Docker Compose
@@ -191,16 +191,16 @@ Then run the following command to sign the binary:
 codesign -f -s "RCD Local" ./bin/gopher-social --deep
 ```
 
-I added this to the build step in my `Taskdev.yaml` file:
+I added this to the build step in my `Taskdev.yml` file:
 
 ```yaml
-  build:
-    deps: [check-deps]
-    cmds:
-      - go build -o {{.out}} {{.src}}
-      - codesign -f -s "RCD Local" {{.out}} --deep
-    generates:
-      - ./{{.out}}
+build:
+  deps: [check-deps]
+  cmds:
+    - go build -o {{.out}} {{.src}}
+    - codesign -f -s "RCD Local" {{.out}} --deep
+  generates:
+    - ./{{.out}}
 ```
 
 Then I configured `.air.toml` to call the build task:
