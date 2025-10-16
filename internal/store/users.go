@@ -2,8 +2,10 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -44,4 +46,32 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 
 	user.CreatedAt = createdAt.Format(time.RFC3339)
 	return nil
+}
+
+func (s *UserStore) GetByID(ctx context.Context, id string) (*User, error) {
+	query := `
+		SELECT id, username, email, created_at
+		FROM users
+		WHERE id = $1
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	user := &User{}
+	var createdAt time.Time
+	if err := s.db.QueryRow(ctx, query, id).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&createdAt,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+
+	user.CreatedAt = createdAt.Format(time.RFC3339)
+	return user, nil
 }

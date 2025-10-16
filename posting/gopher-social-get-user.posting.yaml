@@ -1,0 +1,2 @@
+name: gopher-social-get-user
+url: http://localhost:8080/v1/users/1
