@@ -46,3 +46,17 @@ func (app *application) notFoundError(w http.ResponseWriter, r *http.Request, er
 		"resource not found",
 	)
 }
+
+func (app *application) conflictError(w http.ResponseWriter, r *http.Request, err error) {
+	slog.Error(
+		"conflict error",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"error", err.Error(),
+	)
+	writeJSONError(
+		w,
+		http.StatusConflict,
+		"resource conflict",
+	)
+}

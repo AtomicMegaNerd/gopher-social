@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -26,7 +27,16 @@ func (s *FollowerStore) Follow(ctx context.Context, userID, followerID int64) er
 	defer cancel()
 
 	_, err := s.db.Exec(ctx, query, userID, followerID)
-	return err
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			if pgErr.Code == "23505" { // unique_violation
+				return ErrConflict
+			}
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (s *FollowerStore) Unfollow(ctx context.Context, userID, followerID int64) error {

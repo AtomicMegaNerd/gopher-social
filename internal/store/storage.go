@@ -10,6 +10,7 @@ import (
 
 var (
 	ErrNotFound          = errors.New("record not found")
+	ErrConflict          = errors.New("record conflict")
 	QueryTimeoutDuration = time.Second * 5
 )
 
