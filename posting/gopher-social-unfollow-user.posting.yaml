@@ -1,0 +1,12 @@
+name: gopher-social-unfollow-user
+method: PUT
+url: http://localhost:8080/v1/users/96/unfollow
+body:
+  content: |-
+    {
+      "user_id": 32
+    }
+  content_type: application/json
+headers:
+- name: content-type
+  value: application/json
