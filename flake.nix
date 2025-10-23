@@ -33,6 +33,9 @@
             pkgs.air
             pkgs.rainfrog
             pkgs.posting
+            pkgs.bash-language-server
+            pkgs.docker-language-server
+            pkgs.yaml-language-server
           ];
         };
       }
