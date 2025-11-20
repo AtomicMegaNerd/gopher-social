@@ -217,16 +217,6 @@ func generateUsers(n int) []*store.User {
 	return users
 }
 
-func checkForDuplicates(items []string) {
-	seen := make(map[string]struct{})
-	for _, item := range items {
-		if _, exists := seen[item]; exists {
-			panic(fmt.Sprintf("duplicate found: %s", item))
-		}
-		seen[item] = struct{}{}
-	}
-}
-
 func generatePosts(n int, users []*store.User) []*store.Post {
 	posts := make([]*store.Post, n)
 	for ix := range n {
