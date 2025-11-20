@@ -23,7 +23,7 @@ type Post struct {
 
 // This will be used within the feed
 type PostWithMetadata struct {
-	Post
+	Post             // Composition is not inheritance :-)
 	CommentCount int `json:"comments_count"`
 }
 

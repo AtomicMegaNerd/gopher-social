@@ -150,6 +150,23 @@ var comments = []string{
 	"Your feedback was spot-on and greatly appreciated.",
 }
 
+var emailDomains = []string{
+	"example.com",
+	"mail.com",
+	"test.org",
+	"demo.net",
+	"sample.co",
+	"rofl.org",
+	"fakesite.com",
+	"mydomain.net",
+	"email.org",
+	"webmail.co",
+	"inbox.com",
+	"happymail.co",
+	"coolmail2000.org",
+	"funmail.happy",
+}
+
 func Seed(store *store.Storage) {
 
 	ctx := context.Background()
@@ -184,10 +201,11 @@ func Seed(store *store.Storage) {
 func generateUsers(n int) []*store.User {
 	users := make([]*store.User, n)
 	for ix := range n {
+		emailDomain := emailDomains[rand.Intn(len(emailDomains))]
 		// Generate a random string of 3 digits to append to the username
 		suffix := fmt.Sprintf("%d%d%d", rand.Intn(10), rand.Intn(10), rand.Intn(10))
 		username := fmt.Sprintf("%s-%s", usernames[rand.Intn(len(usernames))], suffix)
-		email := fmt.Sprintf("%s@%s", username, "example.com")
+		email := fmt.Sprintf("%s@%s", username, emailDomain)
 
 		password := "123456" // In a real application, ensure passwords are hashed
 		users[ix] = &store.User{
@@ -197,6 +215,16 @@ func generateUsers(n int) []*store.User {
 		}
 	}
 	return users
+}
+
+func checkForDuplicates(items []string) {
+	seen := make(map[string]struct{})
+	for _, item := range items {
+		if _, exists := seen[item]; exists {
+			panic(fmt.Sprintf("duplicate found: %s", item))
+		}
+		seen[item] = struct{}{}
+	}
 }
 
 func generatePosts(n int, users []*store.User) []*store.Post {

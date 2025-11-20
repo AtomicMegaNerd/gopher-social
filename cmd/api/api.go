@@ -77,12 +77,10 @@ func (app *application) mount() http.Handler {
 			})
 
 			r.Group(func(r chi.Router) {
-				r.Get("feed", app.getUserFeedHandler)
+				// This is the feed for the currently logged in user...
+				r.Get("/feed", app.getUserFeedHandler)
 			})
 		})
-
-		// v1/users/feed (the userID is the authenticated user)
-
 	})
 
 	return r
