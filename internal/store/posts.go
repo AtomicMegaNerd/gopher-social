@@ -154,7 +154,9 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMetadata, error) {
+func (s *PostStore) GetUserFeed(
+	ctx context.Context, userID int64, pq PaginatedFeedQuery,
+) ([]PostWithMetadata, error) {
 
 	query := `
 		SELECT
@@ -167,7 +169,8 @@ func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMe
 		LEFT JOIN followers f ON f.follower_id = p.user_id OR p.user_id = $1
 	  	WHERE f.user_id = $1 OR p.user_id = $1
 	   	GROUP BY p.id, u.username
-		ORDER BY p.created_at DESC
+		ORDER BY p.created_at ` + pq.Sort + `
+		LIMIT $2 OFFSET $3
 		;
 	`
 
@@ -178,6 +181,8 @@ func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMe
 		ctx,
 		query,
 		userID,
+		pq.Limit,
+		pq.Offset,
 	)
 	if err != nil {
 		return nil, err
