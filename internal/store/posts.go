@@ -191,6 +191,7 @@ func (s *PostStore) GetUserFeed(
 	defer rows.Close()
 
 	var feed []PostWithMetadata
+	var createdAt time.Time
 	for rows.Next() {
 		var p PostWithMetadata
 		err := rows.Scan(
@@ -198,7 +199,7 @@ func (s *PostStore) GetUserFeed(
 			&p.UserID,
 			&p.Title,
 			&p.Content,
-			&p.CreatedAt,
+			&createdAt,
 			&p.Version,
 			&p.Tags,
 			&p.User.Username,
@@ -207,6 +208,8 @@ func (s *PostStore) GetUserFeed(
 		if err != nil {
 			return nil, err
 		}
+
+		p.CreatedAt = createdAt.Format(time.RFC3339)
 
 		feed = append(feed, p)
 	}
