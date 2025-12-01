@@ -1,13 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+
+	"github.com/atomicmeganerd/gopher-social/docs"
+	"github.com/atomicmeganerd/gopher-social/internal/store"
 )
 
 type config struct {
@@ -15,6 +19,7 @@ type config struct {
 	db      dbConfig
 	env     string
 	version string
+	apiURL  string
 }
 
 type dbConfig struct {
@@ -53,6 +58,11 @@ func (app *application) mount() http.Handler {
 	// Creating the routes is really easy with chi.
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
+
+		// Swagger documentation route
+		docsUrl := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
+		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsUrl)))
+
 		r.Route("/posts", func(r chi.Router) {
 			r.Post("/", app.createPostHandler)
 			r.Route("/{postID}", func(r chi.Router) {
@@ -87,6 +97,11 @@ func (app *application) mount() http.Handler {
 }
 
 func (app *application) run(mux http.Handler) error {
+
+	docs.SwaggerInfo.Version = version
+	docs.SwaggerInfo.Host = app.config.apiURL
+	docs.SwaggerInfo.BasePath = "/v1"
+
 	srv := &http.Server{
 		Addr:         app.config.addr,
 		Handler:      mux,

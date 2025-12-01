@@ -1,0 +1,24 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for GopherSocial, a social network for gohpers",
+        "title": "GopherSocial API",
+        "contact": {
+            "name": "AtomicMegaNerd",
+            "url": "https://github.com/atomicmeganerd"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        }
+    },
+    "basePath": "/v1",
+    "paths": {},
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

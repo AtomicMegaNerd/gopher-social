@@ -60,20 +60,16 @@ tasks:
       - go install gotest.tools/gotestsum@latest
       - go install github.com/boumenot/gocover-cobertura@latest
 
-  generate-test-reports:
+  gen-test-reports:
     deps: [install-tools, test]
     cmds:
       - gotestsum --junitfile={{.ado_test_file}}
       - gocov convert {{.cov_file}} | gocov-xml > {{.ado_cov_file}}
 
-  generate-html-coverage:
-    deps: [install-tools, test]
+  gen-docs:
+    deps: [check-deps]
     cmds:
-      - go tool cover -html={{.cov_file}} -o coverage.html
-
-  generate-docs:
-    cmds:
-      - go run ./gendocs/gendocs.go
+      - podman run --rm -v $(pwd):/code ghcr.io/swaggo/swag:latest init -g ./api/main.go -d cmd,internal && podman run --rm -v $(pwd)/cmd/api:/code ghcr.io/swaggo/swag:latest fmt
 
   update-deps:
     cmds:
