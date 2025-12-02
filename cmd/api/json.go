@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -34,9 +33,8 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 	type envelope struct {
 		Error string `json:"error"`
 	}
-	if err := writeJSON(w, status, &envelope{Error: message}); err != nil {
-		slog.Error("failed to write JSON error response", "error", err)
-	}
+	// Ignore error since we can't do much about it at this point
+	_ = writeJSON(w, status, &envelope{Error: message}) // nolint:errcheck
 }
 
 func (app *application) jsonResponse(w http.ResponseWriter, status int, data any) error {

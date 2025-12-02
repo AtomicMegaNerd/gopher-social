@@ -1,12 +1,11 @@
 package main
 
 import (
-	"log/slog"
 	"net/http"
 )
 
 func (app *application) internalServerError(w http.ResponseWriter, r *http.Request, err error) {
-	slog.Error(
+	app.logger.Error(
 		"internal server error",
 		"method", r.Method,
 		"path", r.URL.Path,
@@ -20,7 +19,7 @@ func (app *application) internalServerError(w http.ResponseWriter, r *http.Reque
 }
 
 func (app *application) badRequestError(w http.ResponseWriter, r *http.Request, err error) {
-	slog.Error(
+	app.logger.Warn(
 		"bad request error",
 		"method", r.Method,
 		"path", r.URL.Path,
@@ -34,7 +33,7 @@ func (app *application) badRequestError(w http.ResponseWriter, r *http.Request, 
 }
 
 func (app *application) notFoundError(w http.ResponseWriter, r *http.Request, err error) {
-	slog.Error(
+	app.logger.Warn(
 		"not found error",
 		"method", r.Method,
 		"path", r.URL.Path,
@@ -48,7 +47,7 @@ func (app *application) notFoundError(w http.ResponseWriter, r *http.Request, er
 }
 
 func (app *application) conflictError(w http.ResponseWriter, r *http.Request, err error) {
-	slog.Error(
+	app.logger.Error(
 		"conflict error",
 		"method", r.Method,
 		"path", r.URL.Path,

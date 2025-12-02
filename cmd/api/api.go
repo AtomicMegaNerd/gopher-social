@@ -39,6 +39,7 @@ const (
 type application struct {
 	config config
 	store  *store.Storage
+	logger *slog.Logger
 }
 
 func (app *application) mount() http.Handler {
@@ -110,6 +111,6 @@ func (app *application) run(mux http.Handler) error {
 		IdleTimeout:  idleTimeout,
 	}
 
-	slog.Info("Starting server", "port", app.config.addr)
+	app.logger.Info("Starting server", "port", app.config.addr)
 	return srv.ListenAndServe()
 }

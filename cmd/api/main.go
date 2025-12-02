@@ -3,10 +3,12 @@ package main
 import (
 	"log"
 	"log/slog"
+	"os"
 
 	"github.com/atomicmeganerd/gopher-social/internal/db"
 	"github.com/atomicmeganerd/gopher-social/internal/env"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
+	"github.com/lmittmann/tint"
 )
 
 const version = "0.1.0"
@@ -42,6 +44,13 @@ func main() {
 		version: env.GetString("VERSION", "0.1.1"),
 	}
 
+	// Init logging
+	handler := tint.NewHandler(os.Stderr, &tint.Options{
+		Level:     slog.LevelInfo,
+		AddSource: true,
+	})
+	logger := slog.New(handler)
+
 	pool, err := db.New(
 		cfg.db.addr,
 		cfg.db.maxOpenConns,
@@ -53,10 +62,10 @@ func main() {
 	}
 
 	defer pool.Close()
-	slog.Info("connected to database")
+	logger.Info("connected to database")
 	store := store.NewPostgresStorage(pool)
 
-	app := &application{config: cfg, store: store}
+	app := &application{config: cfg, store: store, logger: logger}
 	mux := app.mount()
 	log.Fatal(app.run(mux))
 }
