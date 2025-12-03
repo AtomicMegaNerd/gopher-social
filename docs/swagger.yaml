@@ -16,6 +16,23 @@ definitions:
     - content
     - title
     type: object
+  main.RegisteredUserPayload:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 72
+        minLength: 8
+        type: string
+      username:
+        maxLength: 100
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
   main.UpdatePostPayload:
     properties:
       content:
@@ -350,6 +367,34 @@ paths:
       summary: Unfollow a user
       tags:
       - users
+  /users/authentication/user:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user with the provided details
+      parameters:
+      - description: User credentials
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.RegisteredUserPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered
+          schema:
+            $ref: '#/definitions/store.User'
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Registers a new user
+      tags:
+      - authentication
   /users/feed:
     get:
       consumes:
