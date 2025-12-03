@@ -182,7 +182,8 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := app.store.Users.Create(r.Context(), user); err != nil {
+	// TODO: Create the token uuid
+	if err := app.store.Users.CreateAndInvite(r.Context(), user, "token"); err != nil {
 		switch err {
 		case store.ErrConflict:
 			app.conflictError(w, r, err)
@@ -190,6 +191,8 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 			app.internalServerError(w, r, err)
 		}
 	}
+
+	// TODO: Send the email
 
 	if err := app.jsonResponse(w, http.StatusCreated, user); err != nil {
 		app.internalServerError(w, r, err)

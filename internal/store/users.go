@@ -94,3 +94,7 @@ func (s *UserStore) GetByID(ctx context.Context, id string) (*User, error) {
 	user.CreatedAt = createdAt.Format(time.RFC3339)
 	return user, nil
 }
+
+func (s *UserStore) CreateAndInvite(ctx context.Context, user *User, inviteCode string) error {
+	return nil
+}
