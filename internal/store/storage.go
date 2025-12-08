@@ -5,12 +5,15 @@ import (
 	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var (
 	ErrNotFound          = errors.New("record not found")
 	ErrConflict          = errors.New("record conflict")
+	ErrDuplicateEmail    = errors.New("duplicate email")
+	ErrDuplicateUsername = errors.New("duplicate username")
 	QueryTimeoutDuration = time.Second * 5
 )
 
@@ -23,9 +26,9 @@ type Storage struct {
 		GetUserFeed(context.Context, int64, PaginatedFeedQuery) ([]PostWithMetadata, error)
 	}
 	Users interface {
-		Create(context.Context, *User) error
+		Create(context.Context, pgx.Tx, *User) error
 		GetByID(context.Context, string) (*User, error)
-		CreateAndInvite(context.Context, *User, string) error
+		CreateAndInvite(context.Context, *User, string, time.Duration) error
 	}
 	Comments interface {
 		Create(context.Context, *Comment) error
@@ -44,4 +47,17 @@ func NewPostgresStorage(db *pgxpool.Pool) *Storage {
 		Comments:  &CommentStore{db},
 		Followers: &FollowerStore{db},
 	}
+}
+
+func withTx(db *pgxpool.Pool, ctx context.Context, fn func(tx pgx.Tx) error) error {
+	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+
+	if err := fn(tx); err != nil {
+		_ = tx.Rollback(ctx)
+	}
+
+	return tx.Commit(ctx)
 }

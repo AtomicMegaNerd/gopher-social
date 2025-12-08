@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type userKey string
@@ -182,14 +185,21 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// TODO: Create the token uuid
-	if err := app.store.Users.CreateAndInvite(r.Context(), user, "token"); err != nil {
+	plainToken := uuid.New().String()
+	// Hash the token to store in the database (this encrypts it)
+	hash := sha256.Sum256([]byte(plainToken))
+	hashToken := hex.EncodeToString(hash[:])
+
+	if err := app.store.Users.CreateAndInvite(r.Context(), user, hashToken, app.config.mail.exp); err != nil {
 		switch err {
-		case store.ErrConflict:
-			app.conflictError(w, r, err)
+		case store.ErrDuplicateUsername:
+			app.badRequestError(w, r, err)
+		case store.ErrDuplicateEmail:
+			app.badRequestError(w, r, err)
 		default:
 			app.internalServerError(w, r, err)
 		}
+		return
 	}
 
 	// TODO: Send the email

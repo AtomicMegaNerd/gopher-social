@@ -4,6 +4,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/atomicmeganerd/gopher-social/internal/db"
 	"github.com/atomicmeganerd/gopher-social/internal/env"
@@ -40,7 +41,10 @@ func main() {
 			minIdleConns: env.GetInt("DB_MIN_IDLE_CONNS", 5),
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
-		env:     env.GetString("ENV", "development"),
+		env: env.GetString("ENV", "development"),
+		mail: mailConfig{
+			exp: time.Hour * 24 * 3, // 3 days
+		},
 		version: env.GetString("VERSION", "0.1.1"),
 	}
 
