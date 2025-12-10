@@ -11,9 +11,19 @@ import (
 	"github.com/google/uuid"
 )
 
+const userCtx userKey = "user"
+
 type userKey string
 
-const userCtx userKey = "user"
+type FollowUser struct {
+	UserID int64 `json:"user_id"`
+}
+
+type RegisteredUserPayload struct {
+	Username string `json:"username" validate:"required,max=100"`
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Password string `json:"password" validate:"required,min=8,max=72"`
+}
 
 // GetUser godoc
 //
@@ -34,39 +44,6 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	if err := app.jsonResponse(w, http.StatusOK, user); err != nil {
 		app.internalServerError(w, r, err)
 	}
-}
-
-func (app *application) userContextMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := chi.URLParam(r, "userID")
-		if userID == "" {
-			app.notFoundError(w, r, nil)
-			return
-		}
-
-		user, err := app.store.Users.GetByID(r.Context(), userID)
-		if err != nil {
-			switch err {
-			case store.ErrNotFound:
-				app.notFoundError(w, r, err)
-			default:
-				app.internalServerError(w, r, err)
-			}
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), userCtx, user)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func getUserFromContext(r *http.Request) *store.User {
-	user, _ := r.Context().Value(userCtx).(*store.User)
-	return user
-}
-
-type FollowUser struct {
-	UserID int64 `json:"user_id"`
 }
 
 // FollowUser godoc
@@ -142,12 +119,6 @@ func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-type RegisteredUserPayload struct {
-	Username string `json:"username" validate:"required,max=100"`
-	Email    string `json:"email" validate:"required,email,max=255"`
-	Password string `json:"password" validate:"required,min=8,max=72"`
-}
-
 // registerUserHandler godoc
 //
 //	@Summary		Registers a new user
@@ -209,4 +180,33 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	if err := app.jsonResponse(w, http.StatusCreated, user); err != nil {
 		app.internalServerError(w, r, err)
 	}
+}
+
+func (app *application) userContextMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userID := chi.URLParam(r, "userID")
+		if userID == "" {
+			app.notFoundError(w, r, nil)
+			return
+		}
+
+		user, err := app.store.Users.GetByID(r.Context(), userID)
+		if err != nil {
+			switch err {
+			case store.ErrNotFound:
+				app.notFoundError(w, r, err)
+			default:
+				app.internalServerError(w, r, err)
+			}
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), userCtx, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func getUserFromContext(r *http.Request) *store.User {
+	user, _ := r.Context().Value(userCtx).(*store.User)
+	return user
 }

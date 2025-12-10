@@ -10,9 +10,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type postkey string
-
 const postCtx postkey = "post"
+
+type postkey string
 
 type CreatePostPayload struct {
 	Title   string   `json:"title" validate:"required,max=100"`

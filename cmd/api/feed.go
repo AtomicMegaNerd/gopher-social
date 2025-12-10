@@ -26,7 +26,6 @@ import (
 //	@Security		ApiKeyAuth
 //	@Router			/users/feed [get]
 func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: Add pagination, search, filters. etc.
 	// Pagination -- sliding window approach: feed?limit=20&offset=0
 	fq := store.PaginatedFeedQuery{
 		Limit:  20,
