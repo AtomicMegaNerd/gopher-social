@@ -230,11 +230,11 @@ func (s *UserStore) getUserFromToken(
 	var createdAt time.Time
 	user := &User{}
 	if err := tx.QueryRow(ctx, query, hashToken, time.Now()).Scan(
-		user.ID,
-		user.Username,
-		user.Email,
-		createdAt,
-		user.IsActive,
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&createdAt,
+		&user.IsActive,
 	); err != nil {
 		switch err {
 		case pgx.ErrNoRows:
