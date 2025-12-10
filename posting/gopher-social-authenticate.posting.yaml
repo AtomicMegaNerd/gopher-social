@@ -1,0 +1,14 @@
+name: gopher-social-authenticate
+method: POST
+url: http://localhost:8080/v1/authentication/user
+body:
+  content: |-
+    {
+      "username": "rcd",
+      "email": "notreal@notreal.email",
+      "password": "happyrofl"
+    }
+  content_type: application/json
+headers:
+- name: content-type
+  value: application/json

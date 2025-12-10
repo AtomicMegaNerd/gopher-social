@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -17,11 +19,18 @@ type User struct {
 	Email     string   `json:"email"`
 	Password  password `json:"-"`
 	CreatedAt string   `json:"created_at"`
+	IsActive  bool     `json:"is_active"`
 }
 
 type password struct {
 	text *string
 	hash []byte
+}
+
+type UserInvitation struct {
+	Token  string `json:"token"`
+	UserID int64  `json:"user_id"`
+	Expiry string `json:"expiry"`
 }
 
 func (p *password) Set(text string) error {
@@ -40,7 +49,7 @@ type UserStore struct {
 }
 
 func (s *UserStore) Create(ctx context.Context, tx pgx.Tx, user *User) error {
-	query := `
+	query := /* sql */ `
 		INSERT INTO users (username, email, password)
 		VALUES ($1, $2, $3) RETURNING id, created_at
 	`
@@ -78,7 +87,7 @@ func (s *UserStore) Create(ctx context.Context, tx pgx.Tx, user *User) error {
 
 func (s *UserStore) GetByID(ctx context.Context, id string) (*User, error) {
 	// WARNING: Do NOT include the password field in the SELECT statement
-	query := `
+	query := /* sql */ `
 		SELECT id, username, email, created_at
 		FROM users
 		WHERE id = $1
@@ -125,11 +134,57 @@ func (s *UserStore) CreateAndInvite(
 	})
 }
 
+func (s *UserStore) Activate(ctx context.Context, token string) error {
+	return withTx(s.db, ctx, func(tx pgx.Tx) error {
+
+		user, err := s.getUserFromToken(ctx, tx, token)
+		if err != nil {
+			return err
+		}
+
+		user.IsActive = true
+		err = s.update(ctx, tx, user)
+		if err != nil {
+			return err
+		}
+
+		err = s.deleteUserInvitations(ctx, tx, user.ID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (s *UserStore) update(ctx context.Context, tx pgx.Tx, user *User) error {
+
+	query := /* sql */ `
+	  UPDATE users u
+	  SET username=$1, email=$2, is_active=$3
+	  WHERE u.id = $4
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := tx.Exec(
+		ctx, query, user.Username, user.Email, user.IsActive, user.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *UserStore) createUserInvitation(
 	ctx context.Context, tx pgx.Tx, token string, inviteExpiry time.Duration, userID int64,
 ) error {
 
-	query := `INSERT INTO user_invitations (token, user_id, expiry) VALUES ($1, $2, $3)`
+	query := /* sql */ `INSERT INTO user_invitations
+							(token, user_id, expiry)
+							VALUES ($1, $2, $3)`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
@@ -140,4 +195,54 @@ func (s *UserStore) createUserInvitation(
 	}
 
 	return nil
+}
+
+func (s *UserStore) deleteUserInvitations(ctx context.Context, tx pgx.Tx, userID int64) error {
+	query := /* sql */ `DELETE FROM user_invitations WHERE user_id = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := tx.Exec(ctx, query, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserStore) getUserFromToken(
+	ctx context.Context, tx pgx.Tx, token string,
+) (*User, error) {
+
+	query := /* sql */ `SELECT u.id, u.username, u.email, u.created_at, u.is_active FROM users u
+							JOIN user_invitations i
+							ON u.id = i.user_id
+							WHERE i.token = $1 and i.expiry > $2`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	hash := sha256.Sum256([]byte(token))
+	hashToken := hex.EncodeToString(hash[:])
+
+	var createdAt time.Time
+	user := &User{}
+	if err := tx.QueryRow(ctx, query, hashToken, time.Now()).Scan(
+		user.ID,
+		user.Username,
+		user.Email,
+		createdAt,
+		user.IsActive,
+	); err != nil {
+		switch err {
+		case pgx.ErrNoRows:
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	user.CreatedAt = createdAt.Format(time.RFC3339)
+	return user, nil
 }
