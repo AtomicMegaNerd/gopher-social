@@ -25,5 +25,5 @@ func main() {
 	slog.Info("connected to database")
 	store := store.NewPostgresStorage(pool)
 
-	db.Seed(store)
+	db.Seed(store, pool)
 }

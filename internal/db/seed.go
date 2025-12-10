@@ -7,6 +7,8 @@ import (
 	"math/rand"
 
 	"github.com/atomicmeganerd/gopher-social/internal/store"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var usernames = []string{
@@ -167,14 +169,19 @@ var emailDomains = []string{
 	"funmail.happy",
 }
 
-func Seed(store *store.Storage) {
+func Seed(store *store.Storage, db *pgxpool.Pool) {
 
 	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return
+	}
 
 	users := generateUsers(100)
 	for _, user := range users {
-		if err := store.Users.Create(ctx, user); err != nil {
+		if err := store.Users.Create(ctx, tx, user); err != nil {
 			slog.Error("failed to create user", "error", err)
+			_ = tx.Rollback(ctx)
 			return
 		}
 	}
@@ -207,11 +214,9 @@ func generateUsers(n int) []*store.User {
 		username := fmt.Sprintf("%s-%s", usernames[rand.Intn(len(usernames))], suffix)
 		email := fmt.Sprintf("%s@%s", username, emailDomain)
 
-		password := "123456" // In a real application, ensure passwords are hashed
 		users[ix] = &store.User{
 			Username: username,
 			Email:    email,
-			Password: password,
 		}
 	}
 	return users
