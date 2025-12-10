@@ -96,11 +96,11 @@ func (app *application) mount() http.Handler {
 				// This is the feed for the currently logged in user...
 				r.Get("/feed", app.getUserFeedHandler)
 			})
+		})
 
-			// routes
-			r.Route("/authentication", func(r chi.Router) {
-				r.Post("/user", app.registerUserHandler)
-			})
+		// routes
+		r.Route("/authentication", func(r chi.Router) {
+			r.Post("/user", app.registerUserHandler)
 		})
 	})
 

@@ -185,6 +185,7 @@ func Seed(store *store.Storage, db *pgxpool.Pool) {
 			return
 		}
 	}
+	_ = tx.Commit(ctx)
 
 	posts := generatePosts(200, users)
 	for _, post := range posts {
