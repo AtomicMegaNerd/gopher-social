@@ -143,13 +143,11 @@ func (s *UserStore) Activate(ctx context.Context, token string) error {
 		}
 
 		user.IsActive = true
-		err = s.update(ctx, tx, user)
-		if err != nil {
+		if err := s.update(ctx, tx, user); err != nil {
 			return err
 		}
 
-		err = s.deleteUserInvitations(ctx, tx, user.ID)
-		if err != nil {
+		if err := s.deleteUserInvitations(ctx, tx, user.ID); err != nil {
 			return err
 		}
 
