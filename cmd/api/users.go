@@ -212,7 +212,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		switch err {
 		case store.ErrNotFound:
-			app.badRequestError(w, r, err)
+			app.notFoundError(w, r, err)
 		default:
 			app.internalServerError(w, r, err)
 		}

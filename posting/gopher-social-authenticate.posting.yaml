@@ -4,8 +4,8 @@ url: http://localhost:8080/v1/authentication/user
 body:
   content: |-
     {
-      "username": "rcd",
-      "email": "notreal@notreal.email",
+      "username": "rcd2",
+      "email": "notreal2@notreal.email",
       "password": "happyrofl"
     }
   content_type: application/json

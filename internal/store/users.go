@@ -137,16 +137,19 @@ func (s *UserStore) CreateAndInvite(
 func (s *UserStore) Activate(ctx context.Context, token string) error {
 	return withTx(s.db, ctx, func(tx pgx.Tx) error {
 
+		// Get the user
 		user, err := s.getUserFromToken(ctx, tx, token)
 		if err != nil {
 			return err
 		}
 
+		// Update the user
 		user.IsActive = true
 		if err := s.update(ctx, tx, user); err != nil {
 			return err
 		}
 
+		// Delete all pending invitations for that user
 		if err := s.deleteUserInvitations(ctx, tx, user.ID); err != nil {
 			return err
 		}

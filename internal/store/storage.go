@@ -58,6 +58,7 @@ func withTx(db *pgxpool.Pool, ctx context.Context, fn func(tx pgx.Tx) error) err
 
 	if err := fn(tx); err != nil {
 		_ = tx.Rollback(ctx)
+		return err
 	}
 
 	return tx.Commit(ctx)
