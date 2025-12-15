@@ -199,6 +199,11 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	err := app.mailer.Send(mailer.UserWelcomeTemplate, user.Username, user.Email, vars, !isProdEnv)
 	if err != nil {
+
+		if err := app.store.Users.Delete(r.Context(), user.ID); err != nil {
+			app.logger.Error("error deleting user", "user", user)
+			return
+		}
 		app.internalServerError(w, r, err)
 		return
 	}
