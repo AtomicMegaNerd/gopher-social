@@ -8,6 +8,7 @@ import (
 
 	"github.com/atomicmeganerd/gopher-social/internal/db"
 	"github.com/atomicmeganerd/gopher-social/internal/env"
+	"github.com/atomicmeganerd/gopher-social/internal/mailer"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/lmittmann/tint"
 )
@@ -32,8 +33,9 @@ const version = "0.1.0"
 func main() {
 
 	cfg := config{
-		addr:   env.GetString("ADDR", ":8080"),
-		apiURL: env.GetString("EXTERNAL_URL", "http://localhost:8080"),
+		addr:        env.GetString("ADDR", ":8080"),
+		apiURL:      env.GetString("EXTERNAL_URL", "http://localhost:8080"),
+		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:4000"),
 		db: dbConfig{
 			// postgres://user:password@host:port/dbname?sslmode=disable
 			addr:         env.GetString("DATABASE_URL", ""), // no default, must be set
@@ -43,7 +45,11 @@ func main() {
 		},
 		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
-			exp: time.Hour * 24 * 3, // 3 days
+			exp:       time.Hour * 24 * 3, // 3 days
+			fromEmail: env.GetString("FROM_EMAIL", ""),
+			sendGrid: sendGridConfig{
+				apiKey: env.GetString("SENDGRID_API_KEY", ""),
+			},
 		},
 		version: env.GetString("VERSION", "0.1.1"),
 	}
@@ -69,7 +75,8 @@ func main() {
 	logger.Info("connected to database")
 	store := store.NewPostgresStorage(pool)
 
-	app := &application{config: cfg, store: store, logger: logger}
+	mailer := mailer.NewSendgrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
+	app := &application{config: cfg, store: store, mailer: mailer, logger: logger}
 	mux := app.mount()
 	log.Fatal(app.run(mux))
 }

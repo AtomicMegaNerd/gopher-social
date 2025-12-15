@@ -11,20 +11,35 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	"github.com/atomicmeganerd/gopher-social/docs"
+	"github.com/atomicmeganerd/gopher-social/internal/mailer"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 )
 
+const (
+	httpTimeout  = 60 * time.Second
+	writeTimeout = 30 * time.Second
+	readTimeout  = 10 * time.Second
+	idleTimeout  = 60 * time.Second
+)
+
 type config struct {
-	addr    string
-	db      dbConfig
-	env     string
-	version string
-	apiURL  string
-	mail    mailConfig
+	addr        string
+	db          dbConfig
+	env         string
+	version     string
+	apiURL      string
+	mail        mailConfig
+	frontendURL string
 }
 
 type mailConfig struct {
-	exp time.Duration
+	sendGrid  sendGridConfig
+	fromEmail string
+	exp       time.Duration
+}
+
+type sendGridConfig struct {
+	apiKey string
 }
 
 type dbConfig struct {
@@ -34,17 +49,11 @@ type dbConfig struct {
 	maxIdleTime  string
 }
 
-const (
-	httpTimeout  = 60 * time.Second
-	writeTimeout = 30 * time.Second
-	readTimeout  = 10 * time.Second
-	idleTimeout  = 60 * time.Second
-)
-
 type application struct {
 	config config
 	store  *store.Storage
 	logger *slog.Logger
+	mailer mailer.Client
 }
 
 func (app *application) mount() http.Handler {
