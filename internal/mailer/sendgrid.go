@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"log/slog"
 	"time"
 
 	"github.com/sendgrid/sendgrid-go"
@@ -29,25 +28,25 @@ func NewSendgrid(apiKey, fromEmail string) *SendGridMailer {
 
 func (m *SendGridMailer) Send(
 	templateFile, username, email string, data any, isSandbox bool,
-) error {
+) (int, error) {
 
 	from := mail.NewEmail(FromName, m.fromEmail)
 	to := mail.NewEmail(username, email)
 
 	temp, err := template.ParseFS(FS, fmt.Sprintf("templates/%s", UserWelcomeTemplate))
 	if err != nil {
-		return nil
+		return -1, nil
 	}
 
 	subject := new(bytes.Buffer)
 	err = temp.ExecuteTemplate(subject, "subject", data)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	body := new(bytes.Buffer)
 	err = temp.ExecuteTemplate(body, "body", data)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	message := mail.NewSingleEmail(from, subject.String(), to, "", body.String())
@@ -58,18 +57,14 @@ func (m *SendGridMailer) Send(
 		},
 	})
 
+	var retryErr error
 	for i := range maxRetries {
-		_, err := m.client.Send(message)
-		if err != nil {
-
-			slog.Error("Failed to send email", "email", email, "attempt", i+1, "maxRetries", maxRetries)
-			slog.Error("Error", "error", err.Error())
-
+		response, retryErr := m.client.Send(message)
+		if retryErr != nil {
 			time.Sleep(time.Second * time.Duration(i+1))
 			continue
 		}
+		return response.StatusCode, nil
 	}
-
-	return fmt.Errorf("failed to send email after %d attempts", maxRetries)
-
+	return -1, fmt.Errorf("failed to send email after %d attempts, error: %v", maxRetries, retryErr)
 }
