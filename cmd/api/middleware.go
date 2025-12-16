@@ -13,19 +13,19 @@ func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				app.unauthorizedError(w, r, fmt.Errorf("authorization header is missing"))
+				app.unauthorizedBasicError(w, r, fmt.Errorf("authorization header is missing"))
 				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Basic" {
-				app.unauthorizedError(w, r, fmt.Errorf("invalid authorization header format"))
+				app.unauthorizedBasicError(w, r, fmt.Errorf("invalid authorization header format"))
 				return
 			}
 
 			decoded, err := base64.StdEncoding.DecodeString(parts[1])
 			if err != nil {
-				app.unauthorizedError(w, r, err)
+				app.unauthorizedBasicError(w, r, err)
 				return
 			}
 
@@ -33,12 +33,14 @@ func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 			password := app.config.auth.basic.password
 
 			if username == "" || password == "" {
-				app.unauthorizedError(w, r, fmt.Errorf("basic auth credentials are not set"))
+				app.internalServerError(w, r, fmt.Errorf("basic auth credentials are not set"))
+				return
 			}
 
 			creds := strings.SplitN(string(decoded), ":", 2)
 			if len(creds) != 2 || creds[0] != username || creds[1] != password {
-				app.unauthorizedError(w, r, fmt.Errorf("invalid credentials"))
+				app.unauthorizedBasicError(w, r, fmt.Errorf("invalid credentials"))
+				return
 			}
 
 			next.ServeHTTP(w, r)

@@ -67,3 +67,13 @@ func (app *application) unauthorizedError(w http.ResponseWriter, r *http.Request
 
 	writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 }
+
+func (app *application) unauthorizedBasicError(w http.ResponseWriter, r *http.Request, err error) {
+	app.logger.Warn(
+		"unauthorized basic error", "method", r.Method, "path", r.URL.Path, "error", err.Error(),
+	)
+
+	// Set the WWW-Authenticate header to indicate that basic authentication is required
+	w.Header().Set("WWW-Authenticate", `Basic realm="Restricted", charset="UTF-8"`)
+	writeJSONError(w, http.StatusUnauthorized, "unauthorized")
+}
