@@ -1,0 +1,9 @@
+[
+  {
+    "label": "Open Zellij Pane",
+    "command": "./scripts/zellij.sh",
+    "hide": "always",
+    "allow_concurrent_runs": false,
+    "use_new_terminal": true
+  }
+]

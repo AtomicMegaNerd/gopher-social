@@ -5,9 +5,6 @@ layout {
             plugin location="compact-bar"
         }
     }
-    tab name="neovim" split_direction="vertical" {
-        pane command="nvim"
-    }
     tab name="shell" split_direction="vertical" {
         pane command="fish"
     }
