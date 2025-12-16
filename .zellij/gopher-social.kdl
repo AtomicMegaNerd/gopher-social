@@ -8,6 +8,9 @@ layout {
     tab name="shell" split_direction="vertical" {
         pane command="fish"
     }
+    tab name="npm" split_direction="vertical" {
+        pane command="npm run dev"
+    }
     tab name="air" split_direction="vertical" {
         pane command="air"
     }
