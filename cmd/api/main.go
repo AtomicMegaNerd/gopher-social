@@ -52,6 +52,12 @@ func main() {
 			},
 		},
 		version: env.GetString("VERSION", "0.1.1"),
+		auth: authConfig{
+			basic: basicAuthConfig{
+				username: env.GetString("BASIC_USERNAME", ""),
+				password: env.GetString("BASIC_PASSWORD", ""),
+			},
+		},
 	}
 
 	// Init logging

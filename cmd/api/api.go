@@ -31,6 +31,16 @@ type config struct {
 	apiURL      string
 	mail        mailConfig
 	frontendURL string
+	auth        authConfig
+}
+
+type authConfig struct {
+	basic basicAuthConfig
+}
+
+type basicAuthConfig struct {
+	username string
+	password string
 }
 
 type mailConfig struct {
@@ -83,7 +93,7 @@ func (app *application) mount() http.Handler {
 
 	// Creating the routes is really easy with chi.
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/health", app.healthCheckHandler)
+		r.With(app.BasicAuthMiddleware()).Get("/health", app.healthCheckHandler)
 
 		// Swagger documentation route
 		docsUrl := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
