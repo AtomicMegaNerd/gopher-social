@@ -5,5 +5,19 @@
     "hide": "always",
     "allow_concurrent_runs": false,
     "use_new_terminal": true
+  },
+  {
+    "label": "Run Tests",
+    "command": "task test",
+    "hide": "never",
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true
+  },
+  {
+    "label": "Run Build",
+    "command": "task build",
+    "hide": "never",
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true
   }
 ]
