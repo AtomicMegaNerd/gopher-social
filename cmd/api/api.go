@@ -62,7 +62,7 @@ func (app *application) mount() http.Handler {
 
 	r.Use(cors.Handler(cors.Options{
 		// TODO: Finishc configuring this properly
-		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedOrigins:   []string{"http://localhost:5146"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},

@@ -5,6 +5,7 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: end-of-file-fixer
+        ignore: ["^docs/"]
       - id: trailing-whitespace
       - id: detect-private-key
       - id: mixed-line-ending
