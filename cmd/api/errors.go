@@ -74,6 +74,7 @@ func (app *application) unauthorizedBasicError(w http.ResponseWriter, r *http.Re
 	)
 
 	// Set the WWW-Authenticate header to indicate that basic authentication is required
+	// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
 	w.Header().Set("WWW-Authenticate", `Basic realm="Restricted", charset="UTF-8"`)
 	writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 }

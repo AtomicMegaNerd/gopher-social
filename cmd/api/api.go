@@ -93,6 +93,7 @@ func (app *application) mount() http.Handler {
 
 	// Creating the routes is really easy with chi.
 	r.Route("/v1", func(r chi.Router) {
+		// r.With applies the middleware to the route in a nice clean way
 		r.With(app.BasicAuthMiddleware()).Get("/health", app.healthCheckHandler)
 
 		// Swagger documentation route

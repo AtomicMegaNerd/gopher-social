@@ -1,0 +1,7 @@
+name: gopher-social-health
+url: http://localhost:8080/v1/health
+auth:
+  type: basic
+  basic:
+    username: admin
+    password: ${BASIC_PASSWORD}

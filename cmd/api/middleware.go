@@ -17,6 +17,7 @@ func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
+			// Format of value for Authorization header: Basic <base64-encoded-credentials>
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Basic" {
 				app.unauthorizedBasicError(w, r, fmt.Errorf("invalid authorization header format"))
@@ -37,6 +38,8 @@ func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
+			// credentials when base64 decoded have the format: username:password
+			// SplitN is used to limit the split to 2 parts in case the password contains ":"
 			creds := strings.SplitN(string(decoded), ":", 2)
 			if len(creds) != 2 || creds[0] != username || creds[1] != password {
 				app.unauthorizedBasicError(w, r, fmt.Errorf("invalid credentials"))
