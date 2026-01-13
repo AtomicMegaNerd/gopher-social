@@ -17,11 +17,13 @@ func NewJWTAuthenticator(secret, audience, issuer string) *JWTAuthenticator {
 }
 
 func (a *JWTAuthenticator) GenerateToken(claims jwt.Claims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(a.secret))
 	if err != nil {
 		return "", err
 	}
+
+	// NOTE: Use jwt.io to check your test tokens
 	return tokenString, nil
 }
 

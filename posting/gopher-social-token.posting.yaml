@@ -1,0 +1,13 @@
+name: gopher-social-token
+method: POST
+url: http://localhost:8080/v1/authentication/token
+body:
+  content: |-
+    {
+      "email": "notreal2@notreal.email",
+      "password": "happyrofl"
+    }
+  content_type: application/json
+headers:
+- name: content-type
+  value: application/json

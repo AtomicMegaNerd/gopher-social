@@ -134,6 +134,7 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*User, error)
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.Password.hash,
 		&createdAt,
 	); err != nil {
 		switch err {

@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -132,9 +133,7 @@ type CreateUserTokenPayload struct {
 //	@Failure		500		{object}	error
 //	@Router			/authentication/token [post]
 func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Request) {
-	// parse the payload credentials
 	var payload CreateUserTokenPayload
-
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestError(w, r, err)
 		return
@@ -145,7 +144,12 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// fetch the user (check if the user exists) from the payload
+	// Check that jwt is configured
+	if app.config.auth.jwtToken.tokenHost == "" || app.config.auth.jwtToken.secret == "" {
+		app.internalServerError(w, r, errors.New("jwt is not configured on this app instance"))
+		return
+	}
+
 	user, err := app.store.Users.GetByEmail(r.Context(), payload.Email)
 	if err != nil {
 		switch err {
@@ -155,13 +159,11 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		default:
 			app.internalServerError(w, r, err)
 		}
+
 	}
 
-	// generate the token -> add claims
-	// NOTE: This will be a pluggable token system where we can switch between stateful
-	// or stateless JWT tokens
-
-	// NOTE: Check the docs on JWT
+	// NOTE: Check the docs on JWT to see what claims can be setup
+	// See: https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-claims
 	claims := jwt.MapClaims{
 		"sub": user.ID,
 		"exp": time.Now().Add(app.config.auth.jwtToken.expiry).Unix(),
@@ -170,7 +172,6 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		"iss": app.config.auth.jwtToken.tokenHost,
 		"aud": app.config.auth.jwtToken.tokenHost,
 	}
-
 	token, err := app.authenticator.GenerateToken(claims)
 	if err != nil {
 		app.internalServerError(w, r, err)
@@ -178,7 +179,6 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// send the token to the client
-	// TODO: Make this a real token
 	if err := app.jsonResponse(w, http.StatusCreated, token); err != nil {
 		app.internalServerError(w, r, err)
 	}
