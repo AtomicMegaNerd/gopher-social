@@ -26,8 +26,9 @@ type Storage struct {
 		GetUserFeed(context.Context, int64, PaginatedFeedQuery) ([]PostWithMetadata, error)
 	}
 	Users interface {
+		GetByEmail(context.Context, string) (*User, error)
+		GetByID(context.Context, int64) (*User, error)
 		Create(context.Context, pgx.Tx, *User) error
-		GetByID(context.Context, string) (*User, error)
 		CreateAndInvite(context.Context, *User, string, time.Duration) error
 		Activate(context.Context, string) error
 		Delete(context.Context, int64) error

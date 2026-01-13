@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/atomicmeganerd/gopher-social/internal/auth"
 	"github.com/atomicmeganerd/gopher-social/internal/db"
 	"github.com/atomicmeganerd/gopher-social/internal/env"
 	"github.com/atomicmeganerd/gopher-social/internal/mailer"
@@ -57,6 +58,11 @@ func main() {
 				username: env.GetString("BASIC_USERNAME", ""),
 				password: env.GetString("BASIC_PASSWORD", ""),
 			},
+			jwtToken: jwtTokenConfig{
+				secret:    env.GetString("JWT_SECRET", ""),
+				tokenHost: env.GetString("JWT_TOKEN_HOST", ""),
+				expiry:    time.Hour * 24 * 3, // 3 days
+			},
 		},
 	}
 
@@ -82,7 +88,15 @@ func main() {
 	store := store.NewPostgresStorage(pool)
 
 	mailer := mailer.NewSendgrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
-	app := &application{config: cfg, store: store, mailer: mailer, logger: logger}
+	jwtAuthenticator := auth.NewJWTAuthenticator(
+		cfg.auth.jwtToken.secret,
+		cfg.auth.jwtToken.tokenHost,
+		cfg.auth.jwtToken.tokenHost,
+	)
+
+	app := &application{
+		config: cfg, store: store, mailer: mailer, logger: logger, authenticator: jwtAuthenticator,
+	}
 	mux := app.mount()
 	log.Fatal(app.run(mux))
 }

@@ -12,6 +12,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	"github.com/atomicmeganerd/gopher-social/docs"
+	"github.com/atomicmeganerd/gopher-social/internal/auth"
 	"github.com/atomicmeganerd/gopher-social/internal/mailer"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 )
@@ -22,6 +23,15 @@ const (
 	readTimeout  = 10 * time.Second
 	idleTimeout  = 60 * time.Second
 )
+
+// The primary application struct
+type application struct {
+	config        config
+	store         *store.Storage
+	logger        *slog.Logger
+	mailer        mailer.Client
+	authenticator auth.Authenticator
+}
 
 type config struct {
 	addr        string
@@ -35,12 +45,19 @@ type config struct {
 }
 
 type authConfig struct {
-	basic basicAuthConfig
+	basic    basicAuthConfig
+	jwtToken jwtTokenConfig
 }
 
 type basicAuthConfig struct {
 	username string
-	password string
+	password string // WARNING: Sensitive secret, do not expose
+}
+
+type jwtTokenConfig struct {
+	secret    string // WARNING: Sensitive secret, do not expose
+	tokenHost string
+	expiry    time.Duration
 }
 
 type mailConfig struct {
@@ -58,13 +75,6 @@ type dbConfig struct {
 	maxOpenConns int
 	minIdleConns int
 	maxIdleTime  string
-}
-
-type application struct {
-	config config
-	store  *store.Storage
-	logger *slog.Logger
-	mailer mailer.Client
 }
 
 func (app *application) mount() http.Handler {
@@ -133,6 +143,7 @@ func (app *application) mount() http.Handler {
 		// routes
 		r.Route("/authentication", func(r chi.Router) {
 			r.Post("/user", app.registerUserHandler)
+			r.Post("/token", app.createTokenHandler)
 		})
 	})
 

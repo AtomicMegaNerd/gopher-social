@@ -85,12 +85,13 @@ func (s *UserStore) Create(ctx context.Context, tx pgx.Tx, user *User) error {
 	return nil
 }
 
-func (s *UserStore) GetByID(ctx context.Context, id string) (*User, error) {
+func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
 	// WARNING: Do NOT include the password field in the SELECT statement
 	query := /* sql */ `
 		SELECT id, username, email, created_at
 		FROM users
 		WHERE id = $1
+		AND is_active = true
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
@@ -99,6 +100,37 @@ func (s *UserStore) GetByID(ctx context.Context, id string) (*User, error) {
 	user := &User{}
 	var createdAt time.Time
 	if err := s.db.QueryRow(ctx, query, id).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&createdAt,
+	); err != nil {
+		switch err {
+		case pgx.ErrNoRows:
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	user.CreatedAt = createdAt.Format(time.RFC3339)
+	return user, nil
+}
+
+func (s *UserStore) GetByEmail(ctx context.Context, email string) (*User, error) {
+	query := /* sql */ `
+		SELECT id, username, email, password, created_at
+		FROM users
+		WHERE email = $1
+		AND is_active = true
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	user := &User{}
+	var createdAt time.Time
+	if err := s.db.QueryRow(ctx, query, email).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,

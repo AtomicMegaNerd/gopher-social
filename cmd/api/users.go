@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
@@ -144,13 +145,19 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 
 func (app *application) userContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := chi.URLParam(r, "userID")
-		if userID == "" {
+		userIDStr := chi.URLParam(r, "userID")
+		if userIDStr == "" {
 			app.notFoundError(w, r, nil)
 			return
 		}
 
-		user, err := app.store.Users.GetByID(r.Context(), userID)
+		userID, err := strconv.Atoi(userIDStr)
+		if err != nil {
+			app.badRequestError(w, r, err)
+			return
+		}
+
+		user, err := app.store.Users.GetByID(r.Context(), int64(userID))
 		if err != nil {
 			switch err {
 			case store.ErrNotFound:
