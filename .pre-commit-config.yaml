@@ -3,9 +3,11 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-yaml
+        exclude: ^docs/swagger\.json$
       - id: check-json
+        exclude: ^docs/swagger\.json$
       - id: end-of-file-fixer
-        ignore: ["^docs/"]
+        exclude: ^docs/swagger\.json$
       - id: trailing-whitespace
       - id: detect-private-key
       - id: mixed-line-ending
