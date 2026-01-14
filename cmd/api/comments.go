@@ -12,8 +12,8 @@ type CreateCommentPayload struct {
 
 func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Request) {
 
+	user := getUserFromContext(r)
 	post := getPostFromContext(r)
-	userId := 1 // TODO: This should be replaced with actual user ID extraction logic
 
 	var payload CreateCommentPayload
 	if err := readJSON(w, r, &payload); err != nil {
@@ -28,7 +28,7 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 
 	comment := &store.Comment{
 		PostID:  post.ID,
-		UserID:  int64(userId),
+		UserID:  user.ID,
 		Content: payload.Content,
 	}
 

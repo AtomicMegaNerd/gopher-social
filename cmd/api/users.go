@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
@@ -10,10 +11,6 @@ import (
 const userCtx userKey = "user"
 
 type userKey string
-
-type FollowUser struct {
-	UserID int64 `json:"user_id"`
-}
 
 // GetUser godoc
 //
@@ -51,15 +48,13 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 //	@Router			/users/{userID}/follow [put]
 func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	userToFollow := getUserFromContext(r)
-
-	// TODO: Hack this for now until we have authentication implemented
-	var payload FollowUser
-	if err := readJSON(w, r, &payload); err != nil {
+	followedID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
 		app.badRequestError(w, r, err)
 		return
 	}
 
-	if err := app.store.Followers.Follow(r.Context(), userToFollow.ID, payload.UserID); err != nil {
+	if err := app.store.Followers.Follow(r.Context(), userToFollow.ID, followedID); err != nil {
 		switch err {
 		case store.ErrConflict:
 			app.conflictError(w, r, err)
@@ -90,15 +85,13 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 //	@Router			/users/{userID}/unfollow [put]
 func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Request) {
 	userToFollow := getUserFromContext(r)
-
-	// TODO: Hack this for now until we have authentication implemented
-	var payload FollowUser
-	if err := readJSON(w, r, &payload); err != nil {
+	followedID, err := strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64)
+	if err != nil {
 		app.badRequestError(w, r, err)
 		return
 	}
 
-	err := app.store.Followers.Unfollow(r.Context(), userToFollow.ID, payload.UserID)
+	err = app.store.Followers.Unfollow(r.Context(), userToFollow.ID, followedID)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
