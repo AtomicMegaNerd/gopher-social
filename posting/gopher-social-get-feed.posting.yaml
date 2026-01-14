@@ -1,2 +1,6 @@
 name: gopher-social-get-feed
 url: http://localhost:8080/v1/users/feed
+auth:
+  type: bearer_token
+  bearer_token:
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJyY2Rnb3BoZXJzb2NpYWwiLCJleHAiOjE3Njg2NzEyMTIsImlhdCI6MTc2ODQxMjAxMiwiaXNzIjoicmNkZ29waGVyc29jaWFsIiwibmJmIjoxNzY4NDEyMDEyLCJzdWIiOjEwMn0.ZjCoYl9dZ24v7uUBVJ2VvOgba6TEZypwVqpmWtkOTas

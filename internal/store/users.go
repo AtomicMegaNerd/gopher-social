@@ -86,9 +86,8 @@ func (s *UserStore) Create(ctx context.Context, tx pgx.Tx, user *User) error {
 }
 
 func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
-	// WARNING: Do NOT include the password field in the SELECT statement
 	query := /* sql */ `
-		SELECT id, username, email, created_at
+		SELECT id, username, email, password, created_at
 		FROM users
 		WHERE id = $1
 		AND is_active = true
@@ -103,6 +102,7 @@ func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.Password.hash,
 		&createdAt,
 	); err != nil {
 		switch err {

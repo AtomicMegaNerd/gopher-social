@@ -41,8 +41,8 @@ type UpdatePostPayload struct {
 //	@Router			/posts [post]
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
 
-	userId := 1 // TODO: This should be replaced with actual user ID extraction logic
 	ctx := r.Context()
+	user := getUserFromContext(r)
 
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
@@ -55,7 +55,7 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	post := &store.Post{
-		UserID:  int64(userId),
+		UserID:  user.ID,
 		Title:   payload.Title,
 		Content: payload.Content,
 		Tags:    payload.Tags,

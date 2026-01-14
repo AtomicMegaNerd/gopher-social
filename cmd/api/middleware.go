@@ -12,7 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func (app *application) authTokenMiddleware(next http.Handler) http.Handler {
+func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		authHeader := r.Header.Get("Authorization")
@@ -25,6 +25,7 @@ func (app *application) authTokenMiddleware(next http.Handler) http.Handler {
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			app.unauthorizedError(w, r, errors.New("authorization header is malformed"))
+			return
 		}
 
 		token := parts[1]
@@ -44,7 +45,7 @@ func (app *application) authTokenMiddleware(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 
-		user, err := app.store.Posts.GetByID(ctx, userId)
+		user, err := app.store.Users.GetByID(ctx, userId)
 		if err != nil {
 			app.unauthorizedError(w, r, err)
 			return

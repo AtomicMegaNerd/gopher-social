@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/atomicmeganerd/gopher-social/internal/store"
@@ -26,6 +27,7 @@ import (
 //	@Security		ApiKeyAuth
 //	@Router			/users/feed [get]
 func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
+
 	// Pagination -- sliding window approach: feed?limit=20&offset=0
 	fq := store.PaginatedFeedQuery{
 		Limit:  20,
@@ -44,7 +46,14 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	feed, err := app.store.Posts.GetUserFeed(r.Context(), int64(41), fq) // Temporary user ID
+	ctx := r.Context()
+	user := getUserFromContext(r)
+	if user == nil {
+		app.internalServerError(w, r, errors.New("authenticated user not in request context"))
+		return
+	}
+
+	feed, err := app.store.Posts.GetUserFeed(ctx, user.ID, fq)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
