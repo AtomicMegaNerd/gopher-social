@@ -1,12 +1,62 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
+func (app *application) authTokenMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			app.unauthorizedError(w, r, fmt.Errorf("authorization header is missing"))
+			return
+		}
+
+		// Authorization: Bearer <token>
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			app.unauthorizedError(w, r, errors.New("authorization header is malformed"))
+		}
+
+		token := parts[1]
+		jwtToken, err := app.authenticator.ValidateToken(token)
+		if err != nil {
+			app.unauthorizedError(w, r, err)
+			return
+		}
+
+		claims := jwtToken.Claims.(jwt.MapClaims)
+
+		userId, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["sub"]), 10, 64)
+		if err != nil {
+			app.unauthorizedError(w, r, err)
+			return
+		}
+
+		ctx := r.Context()
+
+		user, err := app.store.Posts.GetByID(ctx, userId)
+		if err != nil {
+			app.unauthorizedError(w, r, err)
+			return
+		}
+
+		ctx = context.WithValue(ctx, userCtx, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// NOTE: We are only using basic auth here as part of the course to learn how to set that
+// up with Go + chi. Obviously in most cases this would not be a best practice.
 func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +67,7 @@ func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			// Format of value for Authorization header: Basic <base64-encoded-credentials>
+			// Authorization: Basic <base64-encoded-credentials>
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Basic" {
 				app.unauthorizedBasicError(w, r, fmt.Errorf("invalid authorization header format"))

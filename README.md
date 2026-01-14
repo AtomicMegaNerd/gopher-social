@@ -175,6 +175,9 @@ task migrate-up
 task seed-db
 ```
 
+NOTE: Please add a user or at least set `is_active` to true for any users you want to test with as
+you can only do token authentication with users who are active.
+
 ### Rainfrog
 
 Rainfrog is a TUI application to view and manage a PostgreSQL database.

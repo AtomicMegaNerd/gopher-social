@@ -49,6 +49,8 @@ type authConfig struct {
 	jwtToken jwtTokenConfig
 }
 
+// NOTE: We are only using basic auth here as part of the course to learn how to set that
+// up with Go + chi. Obviously in most cases this would not be a best practice.
 type basicAuthConfig struct {
 	username string
 	password string // WARNING: Sensitive secret, do not expose
@@ -103,6 +105,7 @@ func (app *application) mount() http.Handler {
 
 	// Creating the routes is really easy with chi.
 	r.Route("/v1", func(r chi.Router) {
+
 		// r.With applies the middleware to the route in a nice clean way
 		r.With(app.BasicAuthMiddleware()).Get("/health", app.healthCheckHandler)
 
@@ -111,6 +114,7 @@ func (app *application) mount() http.Handler {
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsUrl)))
 
 		r.Route("/posts", func(r chi.Router) {
+			r.Use(app.authTokenMiddleware)
 			r.Post("/", app.createPostHandler)
 			r.Route("/{postID}", func(r chi.Router) {
 				r.Use(app.postContextMiddleware)
@@ -124,6 +128,7 @@ func (app *application) mount() http.Handler {
 		r.Route("/users", func(r chi.Router) {
 			r.Put("/activate/{token}", app.activateUserHandler)
 			r.Route("/{userID}", func(r chi.Router) {
+				r.Use(app.authTokenMiddleware)
 				r.Use(app.userContextMiddleware)
 				r.Get("/", app.getUserHandler)
 
