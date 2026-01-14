@@ -44,6 +44,12 @@ func (p *password) Set(text string) error {
 	return nil
 }
 
+// Compare compares a plaintext password with the stored hash
+// and returns true if they match
+func (p *password) Compare(passText string) error {
+	return bcrypt.CompareHashAndPassword(p.hash, []byte(passText))
+}
+
 type UserStore struct {
 	db *pgxpool.Pool
 }

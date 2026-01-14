@@ -162,6 +162,10 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 
 	}
 
+	if err := user.Password.Compare(payload.Password); err != nil {
+		app.unauthorizedError(w, r, errors.New("invalid password"))
+	}
+
 	// NOTE: Check the docs on JWT to see what claims can be setup
 	// See: https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-claims
 	claims := jwt.MapClaims{
