@@ -271,3 +271,8 @@ bin_dir = "bin"
   bin = "./bin/gopher-social"
   cmd = "task build"
 ```
+
+## Notes
+
+- For adding a migration with a foreign key to a database that has existing data please see
+  [000013_alter_users_with_roles.up.sql](./cmd/migrate/migrations/000013_alter_users_with_roles.up.sql).
