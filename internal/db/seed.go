@@ -217,6 +217,7 @@ func generateUsers(n int) []*store.User {
 
 		users[ix] = &store.User{
 			Username: username,
+			RoleID:   1, // NOTE: Not safe but okay for this development script
 			Email:    email,
 		}
 	}
