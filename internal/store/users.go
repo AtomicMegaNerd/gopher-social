@@ -115,11 +115,11 @@ func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
 		&user.Email,
 		&user.Password.hash,
 		&user.RoleID,
+		&createdAt,
 		&user.Role.ID,
 		&user.Role.Name,
 		&user.Role.Description,
 		&user.Role.Level,
-		&createdAt,
 	); err != nil {
 		switch err {
 		case pgx.ErrNoRows:

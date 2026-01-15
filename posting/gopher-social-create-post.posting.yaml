@@ -9,6 +9,10 @@ body:
       "tags": [ "test" ]
     }
   content_type: application/json
+auth:
+  type: bearer_token
+  bearer_token:
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJyY2Rnb3BoZXJzb2NpYWwiLCJleHAiOjE3Njg3NjExNDIsImlhdCI6MTc2ODUwMTk0MiwiaXNzIjoicmNkZ29waGVyc29jaWFsIiwibmJmIjoxNzY4NTAxOTQyLCJzdWIiOjEwMn0.AkZG7CF9kYa-w0zEw0iPHzTUuS5JU8_E71AQOey_L_4
 headers:
 - name: content-type
   value: application/json
