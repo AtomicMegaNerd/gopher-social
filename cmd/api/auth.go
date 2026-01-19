@@ -70,7 +70,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	hash := sha256.Sum256([]byte(plainToken))
 	hashToken := hex.EncodeToString(hash[:])
 
-	if err := app.store.Users.CreateAndInvite(
+	if err := app.dbStore.Users.CreateAndInvite(
 		r.Context(), user, hashToken, app.config.mail.exp,
 	); err != nil {
 		switch err {
@@ -102,7 +102,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	status, err := app.mailer.Send(mailer.UserWelcomeTemplate, user.Username, user.Email, vars, !isProdEnv)
 
 	if err != nil {
-		if err := app.store.Users.Delete(r.Context(), user.ID); err != nil {
+		if err := app.dbStore.Users.Delete(r.Context(), user.ID); err != nil {
 			app.logger.Error("error deleting user", "user", user)
 			return
 		}
@@ -153,7 +153,7 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := app.store.Users.GetByEmail(r.Context(), payload.Email)
+	user, err := app.dbStore.Users.GetByEmail(r.Context(), payload.Email)
 	if err != nil {
 		switch err {
 		case store.ErrNotFound:

@@ -38,7 +38,7 @@ func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
 
 		claims := jwtToken.Claims.(jwt.MapClaims)
 
-		userId, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["sub"]), 10, 64)
+		userID, err := strconv.ParseInt(fmt.Sprintf("%.f", claims["sub"]), 10, 64)
 		if err != nil {
 			app.unauthorizedError(w, r, err)
 			return
@@ -46,10 +46,9 @@ func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 
-		user, err := app.store.Users.GetByID(ctx, userId)
+		user, err := app.getUser(ctx, userID)
 		if err != nil {
 			app.unauthorizedError(w, r, err)
-			return
 		}
 
 		ctx = context.WithValue(ctx, userCtx, user)
@@ -132,10 +131,39 @@ func (app *application) checkRolePrecedence(
 	ctx context.Context, user *store.User, roleName string,
 ) (bool, error) {
 
-	requiredRole, err := app.store.Roles.GetByName(ctx, roleName)
+	requiredRole, err := app.dbStore.Roles.GetByName(ctx, roleName)
 	if err != nil {
 		return false, err
 	}
 
 	return user.Role.Level >= requiredRole.Level, nil
+}
+
+func (app *application) getUser(ctx context.Context, userID int64) (*store.User, error) {
+
+	var user *store.User
+	var err error
+	if app.config.cache.enabled {
+		user, err = app.cacheStore.Users.Get(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if user == nil {
+		app.logger.Debug("cache miss, loading from db", "user", user)
+		user, err = app.dbStore.Users.GetByID(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := app.cacheStore.Users.Set(ctx, user); err != nil {
+			return nil, err
+		}
+
+	} else {
+		app.logger.Debug("cache hit", "user", user)
+	}
+
+	return user, nil
 }

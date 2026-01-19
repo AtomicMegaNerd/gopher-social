@@ -32,7 +32,7 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 		Content: payload.Content,
 	}
 
-	if err := app.store.Comments.Create(r.Context(), comment); err != nil {
+	if err := app.dbStore.Comments.Create(r.Context(), comment); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}

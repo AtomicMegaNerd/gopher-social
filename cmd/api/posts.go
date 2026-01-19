@@ -61,7 +61,7 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 		Tags:    payload.Tags,
 	}
 
-	if err := app.store.Posts.Create(ctx, post); err != nil {
+	if err := app.dbStore.Posts.Create(ctx, post); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -87,7 +87,7 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromContext(r)
 
-	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID)
+	comments, err := app.dbStore.Comments.GetByPostID(r.Context(), post.ID)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -116,7 +116,7 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromContext(r)
 
-	err := app.store.Posts.Delete(r.Context(), post.ID)
+	err := app.dbStore.Posts.Delete(r.Context(), post.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
@@ -169,7 +169,7 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 		post.Content = *payload.Content
 	}
 
-	if err := app.store.Posts.Update(r.Context(), post); err != nil {
+	if err := app.dbStore.Posts.Update(r.Context(), post); err != nil {
 		switch err {
 		case store.ErrNotFound:
 			app.notFoundError(w, r, err)
@@ -201,7 +201,7 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 
-		post, err := app.store.Posts.GetByID(ctx, postID)
+		post, err := app.dbStore.Posts.GetByID(ctx, postID)
 		if err != nil {
 			switch err {
 			case store.ErrNotFound:

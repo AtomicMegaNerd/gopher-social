@@ -15,6 +15,7 @@ import (
 	"github.com/atomicmeganerd/gopher-social/internal/auth"
 	"github.com/atomicmeganerd/gopher-social/internal/mailer"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
+	"github.com/atomicmeganerd/gopher-social/internal/store/cache"
 )
 
 const (
@@ -27,56 +28,11 @@ const (
 // The primary application struct
 type application struct {
 	config        config
-	store         *store.Storage
+	dbStore       *store.Storage
+	cacheStore    *cache.Storage
 	logger        *slog.Logger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
-}
-
-type config struct {
-	addr        string
-	db          dbConfig
-	env         string
-	version     string
-	apiURL      string
-	mail        mailConfig
-	frontendURL string
-	auth        authConfig
-}
-
-type authConfig struct {
-	basic    basicAuthConfig
-	jwtToken jwtTokenConfig
-}
-
-// NOTE: We are only using basic auth here as part of the course to learn how to set that
-// up with Go + chi. Obviously in most cases this would not be a best practice.
-type basicAuthConfig struct {
-	username string
-	password string // WARNING: Sensitive secret, do not expose
-}
-
-type jwtTokenConfig struct {
-	secret    string // WARNING: Sensitive secret, do not expose
-	tokenHost string
-	expiry    time.Duration
-}
-
-type mailConfig struct {
-	sendGrid  sendGridConfig
-	fromEmail string
-	exp       time.Duration
-}
-
-type sendGridConfig struct {
-	apiKey string
-}
-
-type dbConfig struct {
-	addr         string
-	maxOpenConns int
-	minIdleConns int
-	maxIdleTime  string
 }
 
 func (app *application) mount() http.Handler {
