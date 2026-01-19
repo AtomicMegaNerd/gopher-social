@@ -203,6 +203,24 @@ To run Rainfrog, use the following command:
 rainfrog --url $DATABASE_URL
 ```
 
+### Tredis
+
+Tredis is a Rust based TUI client for Redis.
+
+[https://github.com/huseyinbabal/tredis](https://github.com/huseyinbabal/tredis)
+
+To install:
+
+```bash
+brew install huseyinbabal/tap/tredis
+```
+
+To run tredis:
+
+```bash
+tredis --host localhost --port 6379 --db 1
+```
+
 ## Seeding the Database for Testing
 
 To seed the database with test data, run the following command:
