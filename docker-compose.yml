@@ -8,6 +8,14 @@ services:
       - db-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+  redis:
+    image: redis:8.4.0-alpine3.22
+    container_name: social-redis
+    env_file:
+      - .env
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save 60", "1", "--loglevel", "warning"]
 
 volumes:
   db-data:

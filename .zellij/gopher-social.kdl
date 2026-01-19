@@ -33,6 +33,12 @@ layout {
     tab name="rainfrog" split_direction="vertical" {
         pane command="rainfrog"
     }
+    tab name="tredis" split_direction="vertical" {
+        pane {
+            command "tredis"
+            args "--host" "localhost" "--port" "6379" "--db" "1"
+        }
+    }
     tab name="podman-compose" split_direction="vertical" {
         pane {
             command "podman-compose"
