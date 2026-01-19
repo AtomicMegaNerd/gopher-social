@@ -144,6 +144,7 @@ func (app *application) getUser(ctx context.Context, userID int64) (*store.User,
 	var user *store.User
 	var err error
 	if app.config.cache.enabled {
+		app.logger.Info("loading from cache...")
 		user, err = app.cacheStore.Users.Get(ctx, userID)
 		if err != nil {
 			return nil, err
@@ -151,18 +152,20 @@ func (app *application) getUser(ctx context.Context, userID int64) (*store.User,
 	}
 
 	if user == nil {
-		app.logger.Debug("cache miss, loading from db", "user", user)
+		app.logger.Info("cache miss, loading user from db", "userID", userID)
 		user, err = app.dbStore.Users.GetByID(ctx, userID)
 		if err != nil {
 			return nil, err
 		}
 
-		if err := app.cacheStore.Users.Set(ctx, user); err != nil {
-			return nil, err
+		if app.config.cache.enabled {
+			if err := app.cacheStore.Users.Set(ctx, user); err != nil {
+				return nil, err
+			}
 		}
 
 	} else {
-		app.logger.Debug("cache hit", "user", user)
+		app.logger.Info("cache hit", "userID", userID)
 	}
 
 	return user, nil
