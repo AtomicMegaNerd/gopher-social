@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/atomicmeganerd/gopher-social/internal/auth"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/atomicmeganerd/gopher-social/internal/store/cache"
 	"github.com/lmittmann/tint"
@@ -25,9 +26,10 @@ func newTestApp(t *testing.T) *application {
 	mockCache := cache.NewMockStore()
 
 	return &application{
-		logger:     logger,
-		dbStore:    mockStore,
-		cacheStore: mockCache,
+		logger:        logger,
+		dbStore:       mockStore,
+		cacheStore:    mockCache,
+		authenticator: &auth.TestAuthenticator{},
 	}
 }
 
