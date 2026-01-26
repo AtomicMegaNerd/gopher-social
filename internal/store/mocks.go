@@ -17,7 +17,9 @@ type MockUserStore struct {
 }
 
 func (m *MockUserStore) GetByEmail(ctx context.Context, email string) (*User, error) {
-	return nil, nil
+	return &User{
+		ID: 42,
+	}, nil
 }
 
 func (m *MockUserStore) GetByID(ctx context.Context, id int64) (*User, error) {
