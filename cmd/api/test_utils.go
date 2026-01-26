@@ -39,3 +39,9 @@ func execMockRequests(req *http.Request, mux http.Handler) *httptest.ResponseRec
 
 	return rr
 }
+
+func checkResponseCode(t *testing.T, expected, actual int) {
+	if expected != actual {
+		t.Errorf("expected response code %d but got %d", expected, actual)
+	}
+}

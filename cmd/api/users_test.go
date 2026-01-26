@@ -35,9 +35,3 @@ func TestGetUser(t *testing.T) {
 		checkResponseCode(t, http.StatusOK, rr.Code)
 	})
 }
-
-func checkResponseCode(t *testing.T, expected, actual int) {
-	if expected != actual {
-		t.Errorf("expected response code %d but got %d", expected, actual)
-	}
-}
