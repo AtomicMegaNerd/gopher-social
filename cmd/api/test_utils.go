@@ -13,7 +13,7 @@ import (
 	"github.com/lmittmann/tint"
 )
 
-func newTestApp(t *testing.T) *application {
+func newTestApp(t *testing.T, cfg config) *application {
 	t.Helper()
 
 	handler := tint.NewHandler(os.Stderr, &tint.Options{
@@ -27,6 +27,7 @@ func newTestApp(t *testing.T) *application {
 
 	return &application{
 		logger:        logger,
+		config:        cfg,
 		dbStore:       mockStore,
 		cacheStore:    mockCache,
 		authenticator: &auth.TestAuthenticator{},
@@ -36,7 +37,6 @@ func newTestApp(t *testing.T) *application {
 func execMockRequests(req *http.Request, mux http.Handler) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
-
 	return rr
 }
 

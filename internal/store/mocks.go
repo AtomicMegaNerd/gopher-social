@@ -22,7 +22,7 @@ func (m *MockUserStore) GetByEmail(ctx context.Context, email string) (*User, er
 	}, nil
 }
 
-func (m *MockUserStore) GetByID(ctx context.Context, id int64) (*User, error) {
+func (m *MockUserStore) GetByID(ctx context.Context, userID int64) (*User, error) {
 	return nil, nil
 }
 
@@ -34,12 +34,13 @@ func (m *MockUserStore) CreateAndInvite(
 	ctx context.Context, user *User, token string, expiryDuration time.Duration,
 ) error {
 	return nil
+
 }
 
 func (m *MockUserStore) Activate(ctx context.Context, token string) error {
 	return nil
 }
 
-func (m *MockUserStore) Delete(ctx context.Context, id int64) error {
+func (m *MockUserStore) Delete(ctx context.Context, userID int64) error {
 	return nil
 }
