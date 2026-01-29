@@ -8,6 +8,7 @@ import (
 	"github.com/atomicmeganerd/gopher-social/internal/auth"
 	"github.com/atomicmeganerd/gopher-social/internal/db"
 	"github.com/atomicmeganerd/gopher-social/internal/mailer"
+	"github.com/atomicmeganerd/gopher-social/internal/ratelimiter"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/atomicmeganerd/gopher-social/internal/store/cache"
 	"github.com/lmittmann/tint"
@@ -68,6 +69,11 @@ func main() {
 		cfg.auth.jwtToken.tokenHost,
 	)
 
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	app := &application{
 		config:        cfg,
 		cacheStore:    cacheStore,
@@ -75,7 +81,9 @@ func main() {
 		mailer:        mailer,
 		logger:        logger,
 		authenticator: jwtAuthenticator,
+		rateLimiter:   rateLimiter,
 	}
+
 	mux := app.mount()
 	log.Fatal(app.run(mux))
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -83,4 +84,21 @@ func (app *application) forbiddenError(w http.ResponseWriter, r *http.Request) {
 	app.logger.Warn("forbidden error", "method", r.Method, "path", r.URL.Path)
 
 	writeJSONError(w, http.StatusForbidden, "forbidden")
+}
+
+func (app *application) rateLimitExceeededError(
+	w http.ResponseWriter, r *http.Request, retryAfter string,
+) {
+
+	app.logger.Warn(
+		"rate limited exceeded error",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"sourceIP", r.RemoteAddr,
+	)
+
+	w.Header().Set("Retry-After", retryAfter)
+	writeJSONError(
+		w, http.StatusTooManyRequests, fmt.Sprintf("rate limit exceeded, retry after: %s", retryAfter),
+	)
 }

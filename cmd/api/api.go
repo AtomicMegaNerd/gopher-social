@@ -19,6 +19,7 @@ import (
 	"github.com/atomicmeganerd/gopher-social/docs"
 	"github.com/atomicmeganerd/gopher-social/internal/auth"
 	"github.com/atomicmeganerd/gopher-social/internal/mailer"
+	"github.com/atomicmeganerd/gopher-social/internal/ratelimiter"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/atomicmeganerd/gopher-social/internal/store/cache"
 )
@@ -38,6 +39,7 @@ type application struct {
 	logger        *slog.Logger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
+	rateLimiter   ratelimiter.Limiter
 }
 
 func (app *application) mount() http.Handler {
@@ -56,10 +58,14 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Logger)
 	// This middleware recovers from panics and writes a 500 if there is one.
 	r.Use(middleware.Recoverer)
-	// This middleware logs the IP address of the requestor.
+	// NOTE: This middleware logs the IP address of the requestor. This is crucial for our
+	// rate limiter
 	r.Use(middleware.RealIP)
 	// This middleware adds a request ID to each request.
 	r.Use(middleware.RequestID)
+
+	// Our custom middleware
+	r.Use(app.RateLimiterMiddleware)
 
 	// What a great way to set timeout!
 	r.Use(middleware.Timeout(httpTimeout))

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/atomicmeganerd/gopher-social/internal/auth"
+	"github.com/atomicmeganerd/gopher-social/internal/ratelimiter"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/atomicmeganerd/gopher-social/internal/store/cache"
 	"github.com/lmittmann/tint"
@@ -26,12 +27,18 @@ func newTestApp(t *testing.T, cfg config) *application {
 	mockCache := cache.NewMockStore()
 	mockAuth := &auth.TestAuthenticator{}
 
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	return &application{
 		logger:        logger,
 		dbStore:       mockStore,
 		cacheStore:    mockCache,
 		authenticator: mockAuth,
 		config:        cfg,
+		rateLimiter:   rateLimiter,
 	}
 }
 

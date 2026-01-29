@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/atomicmeganerd/gopher-social/internal/env"
+	"github.com/atomicmeganerd/gopher-social/internal/ratelimiter"
 )
 
 const version = "0.1.0"
@@ -18,6 +19,7 @@ type config struct {
 	mail        mailConfig
 	frontendURL string
 	auth        authConfig
+	rateLimiter ratelimiter.Config
 }
 
 func NewConfig() config {
@@ -57,6 +59,11 @@ func NewConfig() config {
 				tokenHost: env.GetString("JWT_TOKEN_HOST", ""),
 				expiry:    time.Hour * 24 * 3, // 3 days
 			},
+		},
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.GetInt("RL_REQUESTS_COUNT", 50),
+			TimeFrame:            time.Second * 1,
+			Enabled:              env.GetBool("RL_ENABLED", true),
 		},
 	}
 }
