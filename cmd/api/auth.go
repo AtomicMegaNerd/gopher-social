@@ -99,7 +99,9 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		ActivationURL: activationURL,
 	}
 
-	status, err := app.mailer.Send(mailer.UserWelcomeTemplate, user.Username, user.Email, vars, !isProdEnv)
+	status, err := app.mailer.Send(
+		mailer.UserWelcomeTemplate, user.Username, user.Email, vars, !isProdEnv,
+	)
 
 	if err != nil {
 		if err := app.dbStore.Users.Delete(r.Context(), user.ID); err != nil {
