@@ -24,13 +24,14 @@ func newTestApp(t *testing.T, cfg config) *application {
 
 	mockStore := store.NewMockStore()
 	mockCache := cache.NewMockStore()
+	mockAuth := &auth.TestAuthenticator{}
 
 	return &application{
 		logger:        logger,
-		config:        cfg,
 		dbStore:       mockStore,
 		cacheStore:    mockCache,
-		authenticator: &auth.TestAuthenticator{},
+		authenticator: mockAuth,
+		config:        cfg,
 	}
 }
 

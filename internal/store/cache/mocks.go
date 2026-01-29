@@ -24,5 +24,6 @@ func (m *MockUsersCacheStorage) Get(ctx context.Context, userID int64) (*store.U
 
 func (m *MockUsersCacheStorage) Set(ctx context.Context, user *store.User) error {
 	args := m.Called(user)
-	return args.Error(1)
+	// We set this to 0 because the user argument will be nil here in the test
+	return args.Error(0)
 }

@@ -140,19 +140,17 @@ func (app *application) checkRolePrecedence(
 }
 
 func (app *application) getUser(ctx context.Context, userID int64) (*store.User, error) {
+	if !app.config.cache.enabled {
+		return app.dbStore.Users.GetByID(ctx, userID)
+	}
 
-	var user *store.User
-	var err error
-	if app.config.cache.enabled {
-		app.logger.Info("loading from cache...")
-		user, err = app.cacheStore.Users.Get(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
+	user, err := app.cacheStore.Users.Get(ctx, userID)
+	if err != nil {
+		return nil, err
 	}
 
 	if user == nil {
-		app.logger.Info("cache miss, loading user from db", "userID", userID)
+		app.logger.Debug("cache miss, loading user from db", "userID", userID)
 		user, err = app.dbStore.Users.GetByID(ctx, userID)
 		if err != nil {
 			return nil, err
@@ -165,7 +163,7 @@ func (app *application) getUser(ctx context.Context, userID int64) (*store.User,
 		}
 
 	} else {
-		app.logger.Info("cache hit", "userID", userID)
+		app.logger.Debug("cache hit", "userID", userID)
 	}
 
 	return user, nil

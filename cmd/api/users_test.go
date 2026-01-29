@@ -10,13 +10,13 @@ import (
 )
 
 func TestGetUser(t *testing.T) {
-	withRedis := config{
+	cfgWithRedis := config{
 		cache: cacheConfig{
 			enabled: true,
 		},
 	}
 
-	app := newTestApp(t, withRedis)
+	app := newTestApp(t, cfgWithRedis)
 	mux := app.mount()
 
 	testToken, err := app.authenticator.GenerateToken(nil)
