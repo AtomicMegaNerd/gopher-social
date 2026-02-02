@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"runtime"
 
 	"github.com/atomicmeganerd/gopher-social/internal/auth"
 	"github.com/atomicmeganerd/gopher-social/internal/db"
@@ -103,6 +104,9 @@ func main() {
 			"max_idle_destroy_count":     s.MaxIdleDestroyCount(),
 			"max_lifetime_destroy_count": s.MaxLifetimeDestroyCount(),
 		}
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
 	}))
 
 	mux := app.mount()
