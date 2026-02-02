@@ -10,16 +10,17 @@ import (
 const version = "0.1.0"
 
 type config struct {
-	addr        string
-	db          dbConfig
-	cache       cacheConfig
-	env         string
-	version     string
-	apiURL      string
-	mail        mailConfig
-	frontendURL string
-	auth        authConfig
-	rateLimiter ratelimiter.Config
+	addr              string
+	apiURL            string
+	frontendURL       string
+	allowedCorsOrigin string
+	env               string
+	version           string
+	db                dbConfig
+	cache             cacheConfig
+	mail              mailConfig
+	auth              authConfig
+	rateLimiter       ratelimiter.Config
 }
 
 func NewConfig() config {
@@ -27,6 +28,8 @@ func NewConfig() config {
 		addr:        env.GetString("ADDR", ":8080"),
 		apiURL:      env.GetString("EXTERNAL_URL", "http://localhost:8080"),
 		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:5173"),
+		env:         env.GetString("ENV", "development"),
+		version:     env.GetString("VERSION", "0.1.1"),
 		db: dbConfig{
 			// postgres://user:password@host:port/dbname?sslmode=disable
 			addr:         env.GetString("DATABASE_URL", ""), // no default, must be set
@@ -40,7 +43,6 @@ func NewConfig() config {
 			db:       env.GetInt("REDIS_DB", 0),
 			enabled:  env.GetBool("REDIS_ENABLE", false),
 		},
-		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
 			exp:       time.Hour * 24 * 3, // 3 days
 			fromEmail: env.GetString("FROM_EMAIL", ""),
@@ -48,7 +50,6 @@ func NewConfig() config {
 				apiKey: env.GetString("SENDGRID_API_KEY", ""),
 			},
 		},
-		version: env.GetString("VERSION", "0.1.1"),
 		auth: authConfig{
 			basic: basicAuthConfig{
 				username: env.GetString("BASIC_USERNAME", ""),

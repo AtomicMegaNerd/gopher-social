@@ -1,6 +1,7 @@
 package main
 
 import (
+	"expvar"
 	"log"
 	"log/slog"
 	"os"
@@ -83,6 +84,26 @@ func main() {
 		authenticator: jwtAuthenticator,
 		rateLimiter:   rateLimiter,
 	}
+
+	// Metrics collected
+	expvar.NewString("version").Set(cfg.version)
+	expvar.Publish("database", expvar.Func(func() any {
+		s := pool.Stat()
+		return map[string]any{
+			"acquired_conns":             s.AcquiredConns(),
+			"idle_conns":                 s.IdleConns(),
+			"total_conns":                s.TotalConns(),
+			"max_conns":                  s.MaxConns(),
+			"constructing_conns":         s.ConstructingConns(),
+			"acquire_count":              s.AcquireCount(),
+			"acquire_duration_ms":        s.AcquireDuration().Milliseconds(),
+			"canceled_acquire_count":     s.CanceledAcquireCount(),
+			"empty_acquire_count":        s.EmptyAcquireCount(),
+			"new_conns_count":            s.NewConnsCount(),
+			"max_idle_destroy_count":     s.MaxIdleDestroyCount(),
+			"max_lifetime_destroy_count": s.MaxLifetimeDestroyCount(),
+		}
+	}))
 
 	mux := app.mount()
 	log.Fatal(app.run(mux))

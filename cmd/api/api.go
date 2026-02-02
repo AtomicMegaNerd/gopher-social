@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"expvar"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -45,16 +46,6 @@ type application struct {
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
-	r.Use(cors.Handler(cors.Options{
-		// TODO: Finishc configuring this properly
-		AllowedOrigins:   []string{"http://localhost:5146"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
-		MaxAge:           300,
-	}))
-
 	r.Use(middleware.Logger)
 	// This middleware recovers from panics and writes a 500 if there is one.
 	r.Use(middleware.Recoverer)
@@ -63,18 +54,29 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)
 	// This middleware adds a request ID to each request.
 	r.Use(middleware.RequestID)
-
-	// Our custom middleware
-	r.Use(app.RateLimiterMiddleware)
-
 	// What a great way to set timeout!
 	r.Use(middleware.Timeout(httpTimeout))
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{app.config.frontendURL},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
+	// Our custom middleware, make sure rate limter comes last
+	r.Use(app.RateLimiterMiddleware)
 
 	// Creating the routes is really easy with chi.
 	r.Route("/v1", func(r chi.Router) {
 
 		// Do not use basic auth anymore due to need for graceful shutdown
 		r.Get("/health", app.healthCheckHandler)
+
+		// This is provided
+		r.With(app.BasicAuthMiddleware()).Get("/debug/vars", expvar.Handler().ServeHTTP)
 
 		// Swagger documentation route
 		docsUrl := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
