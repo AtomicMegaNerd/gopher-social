@@ -1,0 +1,30 @@
+name: Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.25
+
+      - name: Install Go tools
+        run: task install-tools
+
+      - name: Run the build
+        run: task build
+
+      - name: Run the Go linters
+        run: task lint
+
+      - name: Run tests
+        run: task test
