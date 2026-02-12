@@ -1,13 +1,16 @@
 package main
 
 import (
+	"expvar"
 	"log"
 	"log/slog"
 	"os"
+	"runtime"
 
 	"github.com/atomicmeganerd/gopher-social/internal/auth"
 	"github.com/atomicmeganerd/gopher-social/internal/db"
 	"github.com/atomicmeganerd/gopher-social/internal/mailer"
+	"github.com/atomicmeganerd/gopher-social/internal/ratelimiter"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/atomicmeganerd/gopher-social/internal/store/cache"
 	"github.com/lmittmann/tint"
@@ -68,6 +71,11 @@ func main() {
 		cfg.auth.jwtToken.tokenHost,
 	)
 
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	app := &application{
 		config:        cfg,
 		cacheStore:    cacheStore,
@@ -75,7 +83,32 @@ func main() {
 		mailer:        mailer,
 		logger:        logger,
 		authenticator: jwtAuthenticator,
+		rateLimiter:   rateLimiter,
 	}
+
+	// Metrics collected
+	expvar.NewString("version").Set(cfg.version)
+	expvar.Publish("database", expvar.Func(func() any {
+		s := pool.Stat()
+		return map[string]any{
+			"acquired_conns":             s.AcquiredConns(),
+			"idle_conns":                 s.IdleConns(),
+			"total_conns":                s.TotalConns(),
+			"max_conns":                  s.MaxConns(),
+			"constructing_conns":         s.ConstructingConns(),
+			"acquire_count":              s.AcquireCount(),
+			"acquire_duration_ms":        s.AcquireDuration().Milliseconds(),
+			"canceled_acquire_count":     s.CanceledAcquireCount(),
+			"empty_acquire_count":        s.EmptyAcquireCount(),
+			"new_conns_count":            s.NewConnsCount(),
+			"max_idle_destroy_count":     s.MaxIdleDestroyCount(),
+			"max_lifetime_destroy_count": s.MaxLifetimeDestroyCount(),
+		}
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+
 	mux := app.mount()
 	log.Fatal(app.run(mux))
 }

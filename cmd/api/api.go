@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"expvar"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -14,6 +20,7 @@ import (
 	"github.com/atomicmeganerd/gopher-social/docs"
 	"github.com/atomicmeganerd/gopher-social/internal/auth"
 	"github.com/atomicmeganerd/gopher-social/internal/mailer"
+	"github.com/atomicmeganerd/gopher-social/internal/ratelimiter"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/atomicmeganerd/gopher-social/internal/store/cache"
 )
@@ -33,37 +40,43 @@ type application struct {
 	logger        *slog.Logger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
+	rateLimiter   ratelimiter.Limiter
 }
 
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
+	r.Use(middleware.Logger)
+	// This middleware recovers from panics and writes a 500 if there is one.
+	r.Use(middleware.Recoverer)
+	// NOTE: This middleware logs the IP address of the requestor. This is crucial for our
+	// rate limiter
+	r.Use(middleware.RealIP)
+	// This middleware adds a request ID to each request.
+	r.Use(middleware.RequestID)
+	// What a great way to set timeout!
+	r.Use(middleware.Timeout(httpTimeout))
+
 	r.Use(cors.Handler(cors.Options{
-		// TODO: Finishc configuring this properly
-		AllowedOrigins:   []string{"http://localhost:5146"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedOrigins:   []string{app.config.frontendURL},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
 
-	r.Use(middleware.Logger)
-	// This middleware recovers from panics and writes a 500 if there is one.
-	r.Use(middleware.Recoverer)
-	// This middleware logs the IP address of the requestor.
-	r.Use(middleware.RealIP)
-	// This middleware adds a request ID to each request.
-	r.Use(middleware.RequestID)
-
-	// What a great way to set timeout!
-	r.Use(middleware.Timeout(httpTimeout))
+	// Our custom middleware, make sure rate limter comes last
+	r.Use(app.RateLimiterMiddleware)
 
 	// Creating the routes is really easy with chi.
 	r.Route("/v1", func(r chi.Router) {
 
-		// r.With applies the middleware to the route in a nice clean way
-		r.With(app.BasicAuthMiddleware()).Get("/health", app.healthCheckHandler)
+		// Do not use basic auth anymore due to need for graceful shutdown
+		r.Get("/health", app.healthCheckHandler)
+
+		// This is provided
+		r.With(app.BasicAuthMiddleware()).Get("/debug/vars", expvar.Handler().ServeHTTP)
 
 		// Swagger documentation route
 		docsUrl := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
@@ -122,6 +135,41 @@ func (app *application) run(mux http.Handler) error {
 		IdleTimeout:  idleTimeout,
 	}
 
-	app.logger.Info("Starting server", "port", app.config.addr)
-	return srv.ListenAndServe()
+	shutdown := make(chan error)
+
+	go func() {
+
+		quit := make(chan os.Signal, 1)
+
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		s := <-quit
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		app.logger.Warn("Signal recieved, initiating shutdown", "signal", s.String())
+		shutdown <- srv.Shutdown(ctx)
+	}()
+
+	app.logger.Info(
+		"Starting GopherSocial server instance",
+		"port", app.config.addr,
+		"env", app.config.env,
+	)
+	err := srv.ListenAndServe()
+	if !errors.Is(err, http.ErrServerClosed) {
+		app.logger.Error("Unexpected error...", "error", err)
+		return err
+	}
+
+	err = <-shutdown
+	if err != nil {
+		app.logger.Error("Unexpected error...", "error", err)
+		return err
+	}
+
+	app.logger.Info(
+		"server has stopped with no errors", "addr", app.config.addr, "env", app.config.env,
+	)
+	return nil
 }

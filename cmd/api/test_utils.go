@@ -8,12 +8,13 @@ import (
 	"testing"
 
 	"github.com/atomicmeganerd/gopher-social/internal/auth"
+	"github.com/atomicmeganerd/gopher-social/internal/ratelimiter"
 	"github.com/atomicmeganerd/gopher-social/internal/store"
 	"github.com/atomicmeganerd/gopher-social/internal/store/cache"
 	"github.com/lmittmann/tint"
 )
 
-func newTestApp(t *testing.T) *application {
+func newTestApp(t *testing.T, cfg config) *application {
 	t.Helper()
 
 	handler := tint.NewHandler(os.Stderr, &tint.Options{
@@ -24,19 +25,26 @@ func newTestApp(t *testing.T) *application {
 
 	mockStore := store.NewMockStore()
 	mockCache := cache.NewMockStore()
+	mockAuth := &auth.TestAuthenticator{}
+
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
 
 	return &application{
 		logger:        logger,
 		dbStore:       mockStore,
 		cacheStore:    mockCache,
-		authenticator: &auth.TestAuthenticator{},
+		authenticator: mockAuth,
+		config:        cfg,
+		rateLimiter:   rateLimiter,
 	}
 }
 
 func execMockRequests(req *http.Request, mux http.Handler) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
-
 	return rr
 }
 
