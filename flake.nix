@@ -10,22 +10,22 @@
       nixpkgs,
     }:
     let
-      systems = {
-        linux = "x86_64-linux";
-        darwin = "aarch64-darwin";
-      };
+      systems = [
+        "x86_64-linux"
+        "aarch64-darwin"
+      ];
       buildPkgsConf =
-        system: pkg_src:
-        import pkg_src {
+        system:
+        import nixpkgs {
           inherit system;
           config.allowUnfree = true;
         };
     in
     {
-      devShells = nixpkgs.lib.genAttrs (builtins.attrValues systems) (
+      devShells = nixpkgs.lib.genAttrs systems (
         system:
         let
-          pkgs = buildPkgsConf system nixpkgs;
+          pkgs = buildPkgsConf system;
         in
         {
           default = pkgs.mkShell {
